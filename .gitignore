@@ -1,0 +1,33 @@
+# --- SEGURIDAD: Credenciales y Configuración ---
+# Ignoramos la carpeta completa de configuración si contiene datos sensibles
+/includes/config/
+
+# CREDENCIALES DE LA api/config.php, si es que contiene claves de API o DB
+/api/config.php
+
+# Si app.php tiene las claves de conexión a la DB, es correcto ignorarlo
+/includes/app.php
+
+# Archivo de variables de entorno (estándar moderno para llaves de API y DB)
+.env
+
+# --- SISTEMA Y TEMPORALES ---
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# --- REGISTROS Y LOGS DE DESARROLLO ---
+Logs/
+logs/
+
+# --- DEPENDENCIAS (No se suben, se instalan) ---
+/vendor/
+/node_modules/
+
+# --- ESPECÍFICOS DE IDE ---
+.vscode/
+.idea/
+
+# --- HERRAMIENTAS DE IA ---
+.claude/

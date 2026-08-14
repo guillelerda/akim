@@ -1,0 +1,43 @@
+{
+    "name": "akim/gestion",
+    "description": "AKIM - App de gestión comercial para pequeños negocios",
+    "type": "project",
+    "authors": [
+        {
+            "name": "guille",
+            "email": "guillelerda@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "MVC\\"                      : "./",
+            "Model\\"                    : "./models",
+            "Controllers\\"             : "./controllers",
+            "Controllers\\Administrador\\": "./controllers/administrador",
+            "Controllers\\Compras\\"    : "./controllers/compras",
+            "Controllers\\Stock\\"      : "./controllers/stock",
+            "Controllers\\Ventas\\"     : "./controllers/ventas",
+            "Controllers\\Tienda\\"     : "./controllers/tienda",
+            "Model\\Administrador\\"    : "./models/administrador",
+            "Model\\Compras\\"          : "./models/compras",
+            "Model\\Stock\\"            : "./models/stock",
+            "Model\\Ventas\\"           : "./models/ventas",
+            "Model\\Tienda\\"           : "./models/tienda",
+            "Model\\Genericas\\"        : "./models/genericas",
+            "Classes\\"                 : "./classes",
+            "Data\\"                    : "./data",
+            "Data\\Administrador\\"     : "./data/Administrador",
+            "Data\\Compras\\"           : "./data/Compras",
+            "Data\\Stock\\"             : "./data/Stock",
+            "Data\\Ventas\\"            : "./data/Ventas",
+            "Data\\Tienda\\"            : "./data/Tienda",
+            "Arca\\"                    : "./arca"
+        },
+        "classmap": []
+    },
+    "require": {
+        "phpmailer/phpmailer"       : "^6.9",
+        "tecnickcom/tcpdf"          : "^6.8",
+        "phpoffice/phpspreadsheet"  : "^5.3"
+    }
+}
