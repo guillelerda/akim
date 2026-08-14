@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>akim · para comercios</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="logo">akim</div>
+    <nav>
+      <button class="nav-btn active" data-section="dashboard">Dashboard</button>
+      <button class="nav-btn" data-section="productos">Productos</button>
+      <button class="nav-btn" data-section="ventas">Ventas</button>
+      <button class="nav-btn" data-section="clientes">Clientes</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Dashboard -->
+    <section id="dashboard" class="section active">
+      <h1>Dashboard</h1>
+      <div class="cards">
+        <div class="card">
+          <span class="card-label">Ventas hoy</span>
+          <span class="card-value" id="stat-ventas-hoy">$0</span>
+        </div>
+        <div class="card">
+          <span class="card-label">Productos</span>
+          <span class="card-value" id="stat-productos">0</span>
+        </div>
+        <div class="card">
+          <span class="card-label">Clientes</span>
+          <span class="card-value" id="stat-clientes">0</span>
+        </div>
+        <div class="card">
+          <span class="card-label">Ventas totales</span>
+          <span class="card-value" id="stat-ventas-total">$0</span>
+        </div>
+      </div>
+      <h2>Últimas ventas</h2>
+      <table id="tabla-ultimas-ventas">
+        <thead>
+          <tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Total</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Productos -->
+    <section id="productos" class="section">
+      <h1>Productos</h1>
+      <form id="form-producto">
+        <input type="text" id="prod-nombre" placeholder="Nombre del producto" required />
+        <input type="number" id="prod-precio" placeholder="Precio ($)" min="0" step="0.01" required />
+        <input type="number" id="prod-stock" placeholder="Stock" min="0" step="1" required />
+        <button type="submit">Agregar producto</button>
+      </form>
+      <table id="tabla-productos">
+        <thead>
+          <tr><th>Nombre</th><th>Precio</th><th>Stock</th><th>Acción</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Ventas -->
+    <section id="ventas" class="section">
+      <h1>Registrar venta</h1>
+      <form id="form-venta">
+        <select id="venta-cliente">
+          <option value="">Seleccionar cliente</option>
+        </select>
+        <select id="venta-producto">
+          <option value="">Seleccionar producto</option>
+        </select>
+        <input type="number" id="venta-cantidad" placeholder="Cantidad" min="1" step="1" required />
+        <button type="submit">Registrar venta</button>
+      </form>
+      <h2>Historial de ventas</h2>
+      <table id="tabla-ventas">
+        <thead>
+          <tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Cant.</th><th>Total</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Clientes -->
+    <section id="clientes" class="section">
+      <h1>Clientes</h1>
+      <form id="form-cliente">
+        <input type="text" id="cliente-nombre" placeholder="Nombre" required />
+        <input type="email" id="cliente-email" placeholder="Email" />
+        <input type="tel" id="cliente-tel" placeholder="Teléfono" />
+        <button type="submit">Agregar cliente</button>
+      </form>
+      <table id="tabla-clientes">
+        <thead>
+          <tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Acción</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
