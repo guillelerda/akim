@@ -38,13 +38,17 @@ $tokenEsperado = defined('BACKUP_API_TOKEN') ? BACKUP_API_TOKEN : null;
 if (!$tokenEsperado) {
     resp_error('BACKUP_API_TOKEN no definido.', 500);
 }
-$authHeader    = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+$authHeader = $_SERVER['HTTP_AUTHORIZATION']
+           ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+           ?? (function_exists('getallheaders') ? (getallheaders()['Authorization'] ?? getallheaders()['authorization'] ?? '') : '')
+           ?? '';
+
 $tokenRecibido = '';
 if (preg_match('/Bearer\s+(.+)/i', $authHeader, $m)) {
     $tokenRecibido = trim($m[1]);
 }
 if (!hash_equals($tokenEsperado, $tokenRecibido)) {
-    $log('Token inválido. Recibido=[' . substr($tokenRecibido, 0, 8) . '...]');
+    $log('Token inválido. Recibido=[' . substr($tokenRecibido, 0, 8) . '...] AuthHeader=[' . substr($authHeader, 0, 20) . ']');
     resp_error('Token inválido o ausente.', 401);
 }
 
@@ -70,9 +74,9 @@ try {
         resp_error('Conexión a BD no disponible.', 500);
     }
     $stmt = $conexionBD->prepare('
-        SELECT id, bd_name, bd_host, bd_user, bd_pass, bd_resp
+        SELECT id, bd_name, bd_host, bd_user, bd_pass
         FROM sys_bases
-        WHERE id = :id AND bd_activa = \'SI\'
+        WHERE id = :id
         LIMIT 1
     ');
     $stmt->execute(['id' => $id]);
