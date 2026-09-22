@@ -31,6 +31,21 @@ class Model_links extends ActiveDB
         return $c->fetchAll() ?: [];
     }
 
+    public function getByUsername(string $username): array
+    {
+        $c = self::$conexionBD->prepare(
+            "SELECT lk.*, l.habilitada AS lic_habilitada, l.vencimiento,
+                    e.em_nombre
+             FROM sys_links lk
+             LEFT JOIN sys_licencias l ON l.lic_code = lk.licencia
+             LEFT JOIN sys_empresas  e ON e.em_code  = lk.em_code
+             WHERE lk.username = :u
+             ORDER BY lk.licencia ASC"
+        );
+        $c->execute([':u' => $username]);
+        return $c->fetchAll() ?: [];
+    }
+
     public function crear(array $a): void
     {
         self::$conexionBD->prepare(
@@ -38,7 +53,7 @@ class Model_links extends ActiveDB
              VALUES (:u, :lic, :em, :h)
              ON DUPLICATE KEY UPDATE habilitada = VALUES(habilitada)"
         )->execute([
-            ':u'   => strtoupper(trim($a['username'])),
+            ':u'   => strtolower(trim($a['username'])),
             ':lic' => trim($a['licencia']),
             ':em'  => trim($a['em_code']),
             ':h'   => (int)($a['habilitada'] ?? 1),

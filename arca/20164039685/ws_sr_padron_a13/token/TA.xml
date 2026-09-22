@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<loginTicketResponse version="1.0">
+    <header>
+        <source>CN=wsaa, O=AFIP, C=AR, SERIALNUMBER=CUIT 33693450239</source>
+        <destination>C=ar, O=lerda guillermo alberto, SERIALNUMBER=CUIT 20164039685, CN=fc1, EMAILADDRESS=guillelerda@gmail.com</destination>
+        <uniqueId>599643907</uniqueId>
+        <generationTime>2026-07-29T18:27:05.323-03:00</generationTime>
+        <expirationTime>2026-07-30T06:27:05.323-03:00</expirationTime>
+    </header>
+    <credentials>
+        <token>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgc3JjPSJDTj13c2FhLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiB1bmlxdWVfaWQ9IjI5Mjk1OTExODYiIGdlbl90aW1lPSIxNzg1MzYwMzY1IiBleHBfdGltZT0iMTc4NTQwMzYyNSIvPgogICAgPG9wZXJhdGlvbiB0eXBlPSJsb2dpbiIgdmFsdWU9ImdyYW50ZWQiPgogICAgICAgIDxsb2dpbiBlbnRpdHk9IjMzNjkzNDUwMjM5IiBzZXJ2aWNlPSJ3c19zcl9wYWRyb25fYTEzIiB1aWQ9IkM9YXIsIE89bGVyZGEgZ3VpbGxlcm1vIGFsYmVydG8sIFNFUklBTE5VTUJFUj1DVUlUIDIwMTY0MDM5Njg1LCBDTj1mYzEsIEVNQUlMQUREUkVTUz1ndWlsbGVsZXJkYUBnbWFpbC5jb20iIGF1dGhtZXRob2Q9ImNtcyIgcmVnbWV0aG9kPSIyMiI+CiAgICAgICAgICAgIDxyZWxhdGlvbnM+CiAgICAgICAgICAgICAgICA8cmVsYXRpb24ga2V5PSIyMDE2NDAzOTY4NSIgcmVsdHlwZT0iNCIvPgogICAgICAgICAgICA8L3JlbGF0aW9ucz4KICAgICAgICA8L2xvZ2luPgogICAgPC9vcGVyYXRpb24+Cjwvc3NvPgo=</token>
+        <sign>Hpba55my7Rc4rMSvWPPHikMeEW6/cN1D4UpU5aAeOD81TlgFYhGTQfkudD+RPClo5ZV7DON+2c4JeDzixWFsL/E9SpqONwvjYPOLHQ1/b6y0V1P/3JmTEfE2YwZrQZcvxrJfLRkxUAoHZXQM5PmP1XSxRuLVYJkjSmjj//pMcTQ=</sign>
+    </credentials>
+</loginTicketResponse>

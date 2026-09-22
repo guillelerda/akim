@@ -1,0 +1,5 @@
+Array
+(
+    [0] => getPersonaResponse getPersona(getPersona $parameters)
+    [1] => dummyResponse dummy(dummy $parameters)
+)

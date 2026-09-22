@@ -61,13 +61,11 @@ class Controllers_selector
                 ];
                 $_SESSION['licencia'] = $lic_code;
 
-                // Guardar nombre de empresa desencriptado para mostrar en el sidebar
+                // Guardar nombre y slogan de empresa en sesión
                 $em_raw = $elegida['em_nombre'] ?? '';
-                if ($em_raw && strlen($em_raw) > 40) {
-                    $dec = openssl_decrypt($em_raw, SSL_COD, SSL_KEY, SSL_OPT, SSL_CIV);
-                    if ($dec !== false) $em_raw = $dec;
-                }
-                $_SESSION['empresa_nombre'] = $em_raw ?: $lic_code;
+                $dec    = $em_raw ? openssl_decrypt($em_raw, SSL_COD, SSL_KEY, SSL_OPT, SSL_CIV) : false;
+                $_SESSION['empresa_nombre']  = ($dec !== false && $dec !== '') ? $dec : ($em_raw ?: $lic_code);
+                $_SESSION['empresa_slogan']  = $elegida['em_slogan'] ?? '';
 
                 // Conectar a la BD cliente y crear esquema si es primera vez
                 try {
@@ -103,7 +101,7 @@ class Controllers_selector
         unset($_SESSION['data_licencia'], $_SESSION['licencia'], $_SESSION['empresa_nombre']);
         // Limpiar caches de esquema para que re-inicialicen en la nueva empresa
         foreach (array_keys($_SESSION) as $k) {
-            if (str_starts_with($k, 'akim_vta_') || str_starts_with($k, 'akim_stk_')) {
+            if (str_starts_with($k, 'akim_')) {
                 unset($_SESSION[$k]);
             }
         }

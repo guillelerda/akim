@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Date: Wed, 29 Jul 2026 21:27:05 GMT
+Strict-Transport-Security: max-age=300; includeSubDomains; preload
+Content-Length: 1557
+X-XSS-Protection: 1; mode=block
+X-Frame-Options: sameorigin
+X-Content-Type-Options: nosniff
+Set-Cookie: HttpOnly;Secure
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/xml;charset=UTF-8
+Set-Cookie: TS01910257=01229bd671fb0d456a414474ae7c2e5a129df625e49f338b205730d747cecf00a0b1863de96ec3e6c32142d6931da7f83e22b35035703198a4182e10c976312b3ec99af3ef; Path=/; Domain=.aws.afip.gov.ar
+Vary: Accept-Encoding

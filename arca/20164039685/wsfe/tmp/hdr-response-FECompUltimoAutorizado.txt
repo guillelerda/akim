@@ -1,0 +1,7 @@
+HTTP/1.1 200 OK
+Cache-Control: private, max-age=0
+Content-Type: application/soap+xml; charset=utf-8
+Date: Tue, 15 Sep 2026 16:03:15 GMT
+Content-Length: 673
+Set-Cookie: f5avraaaaaaaaaaaaaaaa_session_=KEECFDEHHJANEMICAPKIOPKJHDABJCLAEKBPOKBGNBJKPHFHNHPGAHIMLGNAKOMJCAIDINOPILFAFIFEGGFAAKEHPGDBBDNCPNNNIODFANAPEFIDMGLNODKKKHLEGHGF; HttpOnly; secure;
+Set-Cookie: TS010b76f1=01ef919f3008f0906d808d80ae033d740a79f693ac9d6c2c2dcb222ed619dfa2b29a2cdc4c2c30aa9c09c980da90321995aa10b8f5db812159c24f044b69a69218fa724d20; Path=/; Domain=.wswhomo.afip.gov.ar; 

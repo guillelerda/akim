@@ -6,6 +6,7 @@ use MVC\Router;
 use Model\Model_apphelper;
 use Model\ActiveDB;
 use Model\ActiveDBC;
+use Model\Tesoreria\Model_tes_cajas;
 
 class Controllers_menu
 {
@@ -24,17 +25,35 @@ class Controllers_menu
         $modulos = self::getModulosDisponibles($perfil);
         $stats   = self::getDashboardStats();
 
+        // ── Estado de caja del día ────────────────────────────────────────────
+        $caja_hoy        = null;
+        $caja_saldo_teo  = 0.0;
+        $caja_retiros    = [];
+        $caja_sugerido   = 0.0;
+        try {
+            $caja_hoy      = Model_tes_cajas::getHoy();
+            $caja_sugerido = Model_tes_cajas::getSaldoSugerido();
+            if ($caja_hoy && ($caja_hoy['estado'] ?? '') === 'abierta') {
+                $caja_saldo_teo = Model_tes_cajas::getSaldoTeorico($caja_hoy);
+                $caja_retiros   = Model_tes_cajas::getRetirosHoy((int)$caja_hoy['idx']);
+            }
+        } catch (\Throwable $e) {}
+
         $router->render('menu/menu', [
-            'protegida'  => true,
-            'auth'       => true,
-            'page_title' => 'Dashboard',
-            'username'   => $userName,
-            'nombre'     => $nombre,
-            'perfil'     => $perfil,
-            'foto'       => $mi_usuario->foto ?? '',
-            'em_nombre'  => $em_nombre ?? 'AKIM',
-            'modulos'    => $modulos,
-            'stats'      => $stats,
+            'protegida'       => true,
+            'auth'            => true,
+            'page_title'      => 'Panel de actividad',
+            'username'        => $userName,
+            'nombre'          => $nombre,
+            'perfil'          => $perfil,
+            'foto'            => $mi_usuario->foto ?? '',
+            'em_nombre'       => $em_nombre ?? 'AKIM',
+            'modulos'         => $modulos,
+            'stats'           => $stats,
+            'caja_hoy'        => $caja_hoy,
+            'caja_saldo_teo'  => $caja_saldo_teo,
+            'caja_retiros'    => $caja_retiros,
+            'caja_sugerido'   => $caja_sugerido,
         ]);
     }
 
@@ -46,16 +65,13 @@ class Controllers_menu
     private static function getModulosDisponibles(string $perfil): array
     {
         $todos = [
-            ['codigo' => 'VTA',    'nombre' => 'Ventas',        'icono' => 'fa-receipt',       'url' => 'ventas'],
+            ['codigo' => 'VTA',    'nombre' => 'Ventas',        'icono' => 'fa-receipt',        'url' => 'ventas'],
             ['codigo' => 'CPA',    'nombre' => 'Compras',       'icono' => 'fa-cart-shopping',  'url' => 'compras'],
             ['codigo' => 'STK',    'nombre' => 'Stock',         'icono' => 'fa-boxes-stacked',  'url' => 'stock'],
+            ['codigo' => 'TES',    'nombre' => 'Tesorería',     'icono' => 'fa-coins',          'url' => 'tesoreria'],
             ['codigo' => 'TIENDA', 'nombre' => 'Tienda',        'icono' => 'fa-store',          'url' => 'tienda'],
-            ['codigo' => 'ADM',    'nombre' => 'Administración','icono' => 'fa-gear',           'url' => 'admin'],
         ];
 
-        if ($perfil !== 'admin') {
-            return array_values(array_filter($todos, fn($m) => $m['codigo'] !== 'ADM'));
-        }
         return $todos;
     }
 
@@ -69,6 +85,10 @@ class Controllers_menu
             'stock_bajo'       => 0,
             'ventas_recientes' => [],
             'stock_alertas'    => [],
+            'cxc_cant'         => 0,
+            'cxc_total'        => 0.0,
+            'cxp_cant'         => 0,
+            'cxp_total'        => 0.0,
         ];
 
         try {
@@ -114,7 +134,7 @@ class Controllers_menu
                 "SELECT v.idx, v.total, v.fecha,
                         COALESCE(c.razon_social,'Consumidor final') AS razon_social
                  FROM vta_ventas v
-                 LEFT JOIN vta_clientes c ON v.cliente_idx = c.idx
+                 LEFT JOIN vta_clientes c ON c.id = v.cliente_id
                  ORDER BY v.created_at DESC LIMIT 6"
             );
             if ($r) { $stats['ventas_recientes'] = $r->fetchAll(); }
@@ -130,6 +150,34 @@ class Controllers_menu
                  ORDER BY stock_actual ASC LIMIT 8"
             );
             if ($r) { $stats['stock_alertas'] = $r->fetchAll(); }
+        } catch (\Throwable $e) { }
+
+        // Cuentas por cobrar (ventas emitidas sin cobrar)
+        try {
+            $db = ActiveDBC::getDB();
+            $r  = $db->query(
+                "SELECT COUNT(*) AS cnt, COALESCE(SUM(total),0) AS tot
+                 FROM vta_ventas WHERE estado = 'emitida'"
+            );
+            if ($r) {
+                $row = $r->fetch();
+                $stats['cxc_cant']  = (int)$row['cnt'];
+                $stats['cxc_total'] = (float)$row['tot'];
+            }
+        } catch (\Throwable $e) { }
+
+        // Cuentas por pagar (facturas de compra pendientes)
+        try {
+            $db = ActiveDBC::getDB();
+            $r  = $db->query(
+                "SELECT COUNT(*) AS cnt, COALESCE(SUM(total),0) AS tot
+                 FROM cpa_facturas WHERE estado = 'pendiente'"
+            );
+            if ($r) {
+                $row = $r->fetch();
+                $stats['cxp_cant']  = (int)$row['cnt'];
+                $stats['cxp_total'] = (float)$row['tot'];
+            }
         } catch (\Throwable $e) { }
 
         return $stats;

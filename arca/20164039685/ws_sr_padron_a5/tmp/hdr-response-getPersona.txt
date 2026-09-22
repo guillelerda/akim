@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+Date: Tue, 12 Sep 2023 14:04:20 GMT
+Strict-Transport-Security: max-age=300; includeSubDomains; preload
+Content-Length: 979
+X-XSS-Protection: 1; mode=block
+X-Frame-Options: sameorigin
+X-Content-Type-Options: nosniff
+Set-Cookie: HttpOnly;Secure
+Keep-Alive: timeout=3000, max=100
+Connection: Keep-Alive
+Content-Type: text/xml;charset=UTF-8
+Set-Cookie: f5avraaaaaaaaaaaaaaaa_session_=FKBAJNAADLGPGFHLJANFCFNPJOLIAGDLAOEDCOANHNNDOBKIMJJGMCGLEMDKEBKIOPODHENLJPKAJABMACOAIBCBJGKGFJMGAFNCENPLKNPIOJLMIFGEIMPMJDGOEBCM; HttpOnly; secure
+Set-Cookie: TS01a1c3b4=01439f1ddf5cc85b25c60da05d899bec7d249b6173ca9309ff4628f2946b0c9760994a4b6746b2e063d27a3e2b369143af59ce5185c66028acdcd6986efc66e775b7dee8d3bef9cb528ddf37c9190d42d2dac95826; Path=/
+Vary: Accept-Encoding

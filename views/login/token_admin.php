@@ -29,7 +29,7 @@
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
                 <line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
-            Modo desarrollo — Telegram no configurado. Tu token:
+            Telegram no disponible — ingresá este token:
         </div>
         <div class="token-debug-val"><?php echo htmlspecialchars($debug_token, ENT_QUOTES); ?></div>
     </div>

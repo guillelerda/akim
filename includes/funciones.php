@@ -2,8 +2,8 @@
 
 // ── Entorno ───────────────────────────────────────────────────────────────────
 // ############################################
-define('A_HTTP', 'L');
-// define('A_HTTP', 'W');  // activar solo en producción
+//define('A_HTTP', 'L');
+define('A_HTTP', 'W');  // activar solo en producción
 // ############################################
 
 define('CARPETA_IMAGENES',          $_SERVER['DOCUMENT_ROOT'] . '/public/imagenes/');

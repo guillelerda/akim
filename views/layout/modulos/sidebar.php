@@ -35,7 +35,7 @@ $initial = strtoupper(substr($sidebarNombre ?: $sidebarUsername, 0, 1) ?: 'U');
 
         <a href="menu" class="sidebar-nav-link<?php echo $isActive('menu'); ?>">
             <i class="fa-solid fa-house"></i>
-            <span>Dashboard</span>
+            <span>Panel de actividad</span>
         </a>
 
         <div class="sidebar-nav-section">Operaciones</div>
@@ -55,18 +55,40 @@ $initial = strtoupper(substr($sidebarNombre ?: $sidebarUsername, 0, 1) ?: 'U');
             <span>Stock</span>
         </a>
 
+        <a href="tesoreria" class="sidebar-nav-link<?php echo $isActive('tesoreria') . $isActive('tes_'); ?>">
+            <i class="fa-solid fa-coins"></i>
+            <span>Tesorería</span>
+        </a>
+
         <a href="tienda" class="sidebar-nav-link<?php echo $isActive('tienda'); ?>">
             <i class="fa-solid fa-store"></i>
             <span>Tienda</span>
         </a>
 
-        <?php if ($sidebarPerfil === 'admin'): ?>
-        <div class="sidebar-nav-section">Sistema</div>
-        <a href="admin" class="sidebar-nav-link<?php echo $isActive('admin'); ?>">
-            <i class="fa-solid fa-gear"></i>
-            <span>Administración</span>
+        <div class="sidebar-nav-section">Análisis</div>
+
+        <a href="reportes" class="sidebar-nav-link<?php echo $isActive('reportes'); ?>">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Reportes</span>
         </a>
-        <?php endif; ?>
+
+        <div class="sidebar-nav-section">Sistema</div>
+
+        <a href="mis_datos" class="sidebar-nav-link<?php echo $isActive('mis_datos'); ?>">
+            <i class="fa-solid fa-id-card"></i>
+            <span>Mis Datos</span>
+        </a>
+
+        <a href="caja_historial" class="sidebar-nav-link<?php echo $isActive('caja_historial'); ?>">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Historial Caja</span>
+        </a>
+
+        <a href="parametros" class="sidebar-nav-link<?php echo $isActive('parametros'); ?>">
+            <i class="fa-solid fa-sliders"></i>
+            <span>Parámetros</span>
+        </a>
+
 
     </nav>
 

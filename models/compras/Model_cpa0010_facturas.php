@@ -103,6 +103,17 @@ class Model_cpa0010_facturas extends ActiveDBC
         )->execute([':idx' => $idx]);
     }
 
+    public function eliminar(string $idx): void
+    {
+        self::$conexionBDC->prepare(
+            "DELETE FROM cpa_facturas_items WHERE factura_idx = :idx"
+        )->execute([':idx' => $idx]);
+
+        self::$conexionBDC->prepare(
+            "DELETE FROM " . static::$tabla . " WHERE idx = :idx"
+        )->execute([':idx' => $idx]);
+    }
+
     public function getStatsMes(): array
     {
         try {

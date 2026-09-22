@@ -54,6 +54,23 @@ class Model_licencias extends ActiveDB
         return self::$conexionBD->query($sql)->fetchAll() ?: [];
     }
 
+    public function getLicenciasDisponibles(string $username): array
+    {
+        $sql = "SELECT l.*, e.em_nombre, e.em_code AS em_code_empresa
+                FROM sys_licencias l
+                LEFT JOIN sys_empresas e ON e.em_code = (
+                    SELECT DISTINCT em_code FROM sys_links WHERE licencia = l.lic_code LIMIT 1
+                )
+                WHERE l.habilitada = 1
+                  AND l.lic_code NOT IN (
+                      SELECT licencia FROM sys_links WHERE username = :u
+                  )
+                ORDER BY l.lic_code ASC";
+        $c = self::$conexionBD->prepare($sql);
+        $c->execute([':u' => $username]);
+        return $c->fetchAll() ?: [];
+    }
+
     public function crear(array $a): void
     {
         self::$conexionBD->prepare(

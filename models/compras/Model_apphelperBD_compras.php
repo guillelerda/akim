@@ -15,6 +15,7 @@ class Model_apphelperBD_compras extends ActiveDBC
         self::crearTablaProveedores();
         self::crearTablaFacturas();
         self::crearTablaFacturasItems();
+        self::seedProveedores();
 
         $_SESSION[$key] = true;
     }
@@ -61,6 +62,19 @@ class Model_apphelperBD_compras extends ActiveDBC
             observaciones     TEXT          DEFAULT NULL,
             created_at        DATETIME      DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+    }
+
+    private static function seedProveedores(): void
+    {
+        $count = (int)self::$conexionBDC->query("SELECT COUNT(*) FROM cpa_proveedores")->fetchColumn();
+        if ($count > 0) return;
+
+        self::$conexionBDC->prepare(
+            "INSERT INTO cpa_proveedores
+             (idx, razon_social, condicion_fiscal, condicion_pago, habilitado, observaciones)
+             VALUES (?, 'Proveedor Varios', 'Responsable Inscripto', 'Contado', 1,
+                     'Proveedor genérico para facturas sin proveedor identificado.')"
+        )->execute([uniqid('prv_')]);
     }
 
     private static function crearTablaFacturasItems(): void

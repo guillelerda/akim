@@ -51,12 +51,70 @@ class Controllers_adm_bases
             echo "<script>location.href='adm_bases';</script>"; return;
         }
 
+        // Cancelar creación de BD
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancelar_crear'])) {
+            unset($_SESSION['bd_crear_code']);
+            echo "<script>location.href='adm_bases';</script>"; return;
+        }
+
+        // Paso 1: usuario hizo clic en "Crear BD" → guardar en sesión y mostrar form de credenciales admin
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_bd_code'])) {
+            $_SESSION['bd_crear_code'] = $_POST['create_bd_code'];
+            echo "<script>location.href='adm_bases';</script>"; return;
+        }
+
+        // Paso 2: usuario envió credenciales root → ejecutar CREATE DATABASE
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['exec_crear_bd'])) {
+            $bd_code    = trim($_POST['bd_code_crear']   ?? '');
+            $admin_user = trim($_POST['mysql_admin_user'] ?? 'root');
+            $admin_pass = $_POST['mysql_admin_pass'] ?? '';
+            $row = $obj->getByCode($bd_code);
+
+            if ($row) {
+                $r    = Model_bases::decryptRow($row);
+                $host = $r['bd_host'];
+                $name = $r['bd_name'];
+                $user = $r['bd_user'];
+                $pass = $r['bd_pass'];
+
+                $sql_db    = "CREATE DATABASE IF NOT EXISTS `{$name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;";
+                $sql_user  = "CREATE USER IF NOT EXISTS '{$user}'@'%' IDENTIFIED BY '{$pass}';";
+                $sql_grant = "GRANT ALL PRIVILEGES ON `{$name}`.* TO '{$user}'@'%';";
+                $sql_flush = "FLUSH PRIVILEGES;";
+
+                $_SESSION['bd_sql_result'] = [
+                    'code' => $bd_code,
+                    'sql'  => implode("\n", [$sql_db, $sql_user, $sql_grant, $sql_flush]),
+                ];
+                unset($_SESSION['bd_crear_code']);
+
+                try {
+                    $pdo = new \PDO(
+                        "mysql:host={$host};charset=utf8mb4",
+                        $admin_user, $admin_pass,
+                        [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]
+                    );
+                    $pdo->exec($sql_db);
+                    $pdo->exec($sql_user);
+                    $pdo->exec($sql_grant);
+                    $pdo->exec($sql_flush);
+                    self::flash('ok', "Base de datos «{$name}» y usuario «{$user}» creados exitosamente en {$host}.");
+                    $_SESSION['bd_sql_result']['status'] = 'ok';
+                } catch (\Throwable $e) {
+                    self::flash('err', "Error al crear: " . $e->getMessage() . " — Ejecutá el SQL manualmente en phpMyAdmin.");
+                    $_SESSION['bd_sql_result']['status'] = 'err';
+                }
+            }
+            echo "<script>location.href='adm_bases';</script>"; return;
+        }
+
         $router->render('administrador/adm_bases', [
-            'protegida'  => true,
-            'page_title' => 'Bases de datos',
-            'username'   => $userName,
-            'nombre'     => $nombre,
-            'lista'      => $lista,
+            'protegida'    => true,
+            'page_title'   => 'Bases de datos',
+            'username'     => $userName,
+            'nombre'       => $nombre,
+            'lista'        => $lista,
+            'bd_crear_code'=> $_SESSION['bd_crear_code'] ?? '',
         ], 'layout_admin');
     }
 

@@ -1,0 +1,8 @@
+POST /wsfev1/service.asmx HTTP/1.1
+Host: wswhomo.afip.gov.ar
+Connection: Keep-Alive
+User-Agent: PHP-SOAP/8.1.25
+Content-Type: application/soap+xml; charset=utf-8; action="http://ar.gov.afip.dif.FEV1/FECAESolicitar"
+Content-Length: 2077
+Cookie: f5avraaaaaaaaaaaaaaaa_session_=NNMCEMPCKJGMGLHOCDNEHFPGBOENDGGIILFGDEMNICPIBPCLAEGPJADDCFOJPGDILFGDEIHOMKBAKNNJCDNAKPHLOHJHEHKFMLHPADMIGLAHLCKNEACNBGBDLANKHAFH;TS010b76f1=01ef919f309d0232822f92d32036d3ba194bc6ca9bc3998004b612b13c08f957474405216903693c3de5d691e57618496cdbefac02f9b542aa5effceb8fcb37555714c5c4a;
+

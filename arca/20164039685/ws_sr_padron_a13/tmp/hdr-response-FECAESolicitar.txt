@@ -1,0 +1,12 @@
+HTTP/1.1 200 OK
+Date: Tue, 28 Feb 2023 20:45:42 GMT
+MicrosoftOfficeWebServer: 5.0_Pub
+Expect-CT: enforce
+Strict-Transport-Security: nosniff
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-Xss-Protection: 1; mode=block
+Cache-Control: private, max-age=0
+Content-Type: application/soap+xml; charset=utf-8
+Content-Length: 1064
+Set-Cookie: TS010b76f1=01439f1ddf0996debad207844682394e68b2a2f95bf39e7807fe0a8a89a3f83eb82848f4927948ddf9006baf4d1caaa8ba016796b0; Path=/; Domain=.wswhomo.afip.gov.ar

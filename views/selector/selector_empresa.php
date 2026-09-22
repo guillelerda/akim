@@ -29,11 +29,8 @@ $licencias = $licencias ?? [];
             ?>
             <?php
                 $sin_bd = empty($lic['bd_name']);
-                $em_nombre_dec = $em_nombre;
-                if ($em_nombre && strlen($em_nombre) > 40) {
-                    $dec = openssl_decrypt($em_nombre, SSL_COD, SSL_KEY, SSL_OPT, SSL_CIV);
-                    if ($dec !== false) $em_nombre_dec = $dec;
-                }
+                $dec = $em_nombre ? openssl_decrypt($em_nombre, SSL_COD, SSL_KEY, SSL_OPT, SSL_CIV) : false;
+                $em_nombre_dec = ($dec !== false && $dec !== '') ? $dec : ($em_nombre ?: 'Empresa sin nombre');
             ?>
             <label class="sel-card<?php echo $sin_bd ? ' sel-card--nobd' : ''; ?>"
                    for="lic-<?php echo htmlspecialchars($lic_code, ENT_QUOTES); ?>"
@@ -70,7 +67,7 @@ $licencias = $licencias ?? [];
         </div>
     </form>
 
-    <?php if (count($licencias) === 1): ?>
+    <?php if (count($licencias) === 1 && empty($errores)): ?>
     <script>
         // Si hay una sola empresa, seleccionarla automáticamente y enviar
         document.addEventListener('DOMContentLoaded', function () {

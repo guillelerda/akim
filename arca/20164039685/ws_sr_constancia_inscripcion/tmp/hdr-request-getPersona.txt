@@ -1,0 +1,9 @@
+POST /sr-padron/webservices/personaServiceA5 HTTP/1.1
+Host: aws.afip.gov.ar
+Connection: Keep-Alive
+User-Agent: PHP-SOAP/7.3.12
+Content-Type: text/xml; charset=utf-8
+SOAPAction: ""
+Content-Length: 1277
+Cookie: f5avraaaaaaaaaaaaaaaa_session_=KCOPAIHHNKKJPKDNOPCDBIEIHJLNMLMIFOCIJEFFDLGJBKMNFFFJIFHPMHPIGNEPIJFDDDIEDGPLAJLEDIAAOGFMGLNNKNEMBPJNBPGLNILHKMGCKDCKBKMKLAGIEOOK;TS01910257=0145b27a978bc45cc7beb7ad96a02aeb9e3ca392bcfacace7697d773d1ae00163255611097bed3a580d9acec5d19b18ed2732cc53661e34dcce088474cab1b8cb27955c4aea2b55a62d4385d4eb126f980f9eceb36;
+

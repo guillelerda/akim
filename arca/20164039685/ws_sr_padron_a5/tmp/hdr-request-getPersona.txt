@@ -1,0 +1,8 @@
+POST /sr-padron/webservices/personaServiceA5 HTTP/1.1
+Host: awshomo.afip.gov.ar
+Connection: Keep-Alive
+User-Agent: PHP-SOAP/7.3.12
+Content-Type: text/xml; charset=utf-8
+SOAPAction: ""
+Content-Length: 1269
+

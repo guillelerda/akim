@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AKIM — Nueva Venta</title>
-    <link rel="stylesheet" href="includes/plugins/fontawesome-free-6.6.0-web/css/all.min.css">
-    <script src="includes/plugins/jquery/jquery-3.5.1.min.js"></script>
+    <link rel="stylesheet" href="includes/plugins/plugins/fontawesome-free-6.6.0-web/css/all.min.css">
+    <script src="includes/plugins/plugins/jquery/jquery-3.5.1.min.js"></script>
     <style>
     /* ══════════════════════════════════════════════════════════════════════════
        AKIM — Wizard Layout (dark theme)
@@ -106,7 +106,7 @@
 
     /* ── Progress bar ────────────────────────────────────────────────────────── */
     .wiz-progress-wrap {
-        max-width: 640px;
+        max-width: 820px;
         margin: 2rem auto 0;
         padding: 0 1.5rem;
     }
@@ -178,7 +178,7 @@
 
     /* ── Container ───────────────────────────────────────────────────────────── */
     .wiz-container {
-        max-width: 640px;
+        max-width: 820px;
         margin: 1.5rem auto 3rem;
         padding: 0 1.5rem;
     }
@@ -212,6 +212,28 @@
     }
 
     .wiz-subtitle strong { color: var(--text-muted); }
+
+    /* ── Modo badge (fiscal / manual) — global wizard ────────────────────────── */
+    .wiz-modo-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .3rem .7rem;
+        border-radius: 99px;
+        font-size: .75rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .wiz-modo-fiscal {
+        background: rgba(22,163,74,.18);
+        color: #4ade80;
+        border: 1px solid rgba(22,163,74,.3);
+    }
+    .wiz-modo-manual {
+        background: rgba(100,116,139,.15);
+        color: var(--text-dim);
+        border: 1px solid var(--border);
+    }
 
     /* ── Footer wizard ───────────────────────────────────────────────────────── */
     .wiz-footer {
@@ -467,11 +489,13 @@
 
     .wiz-grid-items {
         display: grid;
-        grid-template-columns: 1fr 90px 130px auto;
+        grid-template-columns: minmax(0, 1fr) 90px 130px auto;
         gap: .65rem;
         align-items: end;
         margin-bottom: 1.25rem;
     }
+    /* Evita que los ítems de grid rompan el contenedor */
+    .wiz-grid-items > * { min-width: 0; }
 
     /* ── Resumen (step 4) ────────────────────────────────────────────────────── */
     .wiz-resumen {

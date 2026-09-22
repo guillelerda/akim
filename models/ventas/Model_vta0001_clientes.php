@@ -40,6 +40,15 @@ class Model_vta0001_clientes extends ActiveDBC
         );
     }
 
+    public function queryById(int $id): ?array
+    {
+        $c = self::$conexionBDC->prepare(
+            "SELECT * FROM vta_clientes WHERE id = :id LIMIT 1"
+        );
+        $c->execute([':id' => $id]);
+        return $c->fetch() ?: null;
+    }
+
     // ── CRUD estándar ─────────────────────────────────────────────────────────
 
     public function queryAll(): array
@@ -52,8 +61,18 @@ class Model_vta0001_clientes extends ActiveDBC
 
     public function insertar(array $a): int
     {
+        if (empty($a['idx'])) {
+            $a['idx'] = uniqid('cli_');
+        }
         Vta_clientes::setDB(self::$conexionBDC);
         return Vta_clientes::insertar($a);
+    }
+
+    public function toggleHabilitado(int $id, int $estado): void
+    {
+        self::$conexionBDC->prepare(
+            "UPDATE " . static::$tabla . " SET habilitado = ? WHERE id = ?"
+        )->execute([$estado, $id]);
     }
 
     public function actualizar(array $a): void

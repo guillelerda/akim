@@ -1,6 +1,20 @@
+<?php $modo_factura = $modo_factura ?? 'manual'; ?>
 <div class="wiz-card">
-    <h2 class="wiz-title">¿A quién le vendemos?</h2>
-    <p class="wiz-subtitle">Escribí el nombre del cliente. Si no existe, lo creamos en el momento.</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1.1rem">
+        <div>
+            <h2 class="wiz-title" style="margin-bottom:.1rem">¿A quién le vendemos?</h2>
+            <p class="wiz-subtitle" style="margin:0">Escribí el nombre del cliente. Si no existe, lo creamos en el momento.</p>
+        </div>
+        <?php if ($modo_factura === 'fiscal'): ?>
+        <span class="wiz-modo-badge wiz-modo-fiscal">
+            <i class="fa-solid fa-file-invoice-dollar"></i> Factura Electrónica AFIP
+        </span>
+        <?php else: ?>
+        <span class="wiz-modo-badge wiz-modo-manual">
+            <i class="fa-solid fa-file-lines"></i> Ticket / Remito
+        </span>
+        <?php endif; ?>
+    </div>
 
     <?php if (!empty($errores)): ?>
     <div class="akim-alert akim-alert--error">
@@ -13,6 +27,7 @@
     <form method="POST" action="vta_wizard_step1" id="form-step1" autocomplete="off">
         <input type="hidden" name="cliente_id"    id="cliente_id"    value="0">
         <input type="hidden" name="cliente_nuevo" id="cliente_nuevo" value="0">
+        <input type="hidden" name="modo_factura"  value="<?php echo $modo_factura; ?>">
 
         <div class="akim-form-group" style="position:relative">
             <label for="cliente_buscar">Cliente</label>
@@ -68,7 +83,7 @@
         if (q.length < 2) { dropdown.style.display = 'none'; return; }
 
         timer = setTimeout(() => {
-            fetch('ajax/jit/jit_clientes.php?q=' + encodeURIComponent(q))
+            fetch('jit_clientes?q=' + encodeURIComponent(q))
                 .then(r => r.json())
                 .then(data => renderDropdown(data));
         }, 220);

@@ -101,9 +101,10 @@ class Controllers_login
                                 }
                             }
 
-                            // En desarrollo local, guardar el token en sesión para mostrarlo en pantalla
-                            if (A_HTTP === 'L' && !$telegram_ok) {
+                            // Si Telegram no está disponible, mostrar el token en pantalla y loggear
+                            if (!$telegram_ok) {
                                 $_SESSION['admin_token_debug'] = $token;
+                                error_log("AKIM admin token (Telegram no disponible) — usuario: {$username} — token: {$token}");
                             }
 
                             echo "<script>location.href='tokenAdmin';</script>";

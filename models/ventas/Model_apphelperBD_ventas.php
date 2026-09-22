@@ -16,6 +16,8 @@ class Model_apphelperBD_ventas extends ActiveDBC
         self::crearTablaClientes();
         self::crearTablaVentas();
         self::crearTablaVentasItems();
+        self::agregarColumnasArca();
+        self::seedClientes();
 
         $_SESSION[$key] = true;
     }
@@ -59,8 +61,52 @@ class Model_apphelperBD_ventas extends ActiveDBC
             estado          VARCHAR(20)   DEFAULT 'emitida',
             observaciones   TEXT          DEFAULT NULL,
             vendedor        VARCHAR(50)   DEFAULT NULL,
+            modo_factura    ENUM('manual','fiscal') NOT NULL DEFAULT 'manual',
+            tipo_cbte       TINYINT       DEFAULT NULL COMMENT '1=FA 6=FB 11=FC',
+            nro_afip        INT           DEFAULT NULL,
+            cae             VARCHAR(20)   DEFAULT NULL,
+            cae_vto         DATE          DEFAULT NULL,
             created_at      DATETIME      DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+    }
+
+    private static function agregarColumnasArca(): void
+    {
+        $stmt = self::$conexionBDC->query(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'vta_ventas'"
+        );
+        $cols = array_flip($stmt->fetchAll(\PDO::FETCH_COLUMN));
+
+        $db = self::$conexionBDC;
+        if (!isset($cols['modo_factura'])) {
+            $db->exec("ALTER TABLE vta_ventas ADD COLUMN modo_factura ENUM('manual','fiscal') NOT NULL DEFAULT 'manual' AFTER observaciones");
+        }
+        if (!isset($cols['tipo_cbte'])) {
+            $db->exec("ALTER TABLE vta_ventas ADD COLUMN tipo_cbte TINYINT DEFAULT NULL AFTER modo_factura");
+        }
+        if (!isset($cols['nro_afip'])) {
+            $db->exec("ALTER TABLE vta_ventas ADD COLUMN nro_afip INT DEFAULT NULL AFTER tipo_cbte");
+        }
+        if (!isset($cols['cae'])) {
+            $db->exec("ALTER TABLE vta_ventas ADD COLUMN cae VARCHAR(20) DEFAULT NULL AFTER nro_afip");
+        }
+        if (!isset($cols['cae_vto'])) {
+            $db->exec("ALTER TABLE vta_ventas ADD COLUMN cae_vto DATE DEFAULT NULL AFTER cae");
+        }
+    }
+
+    private static function seedClientes(): void
+    {
+        $count = (int)self::$conexionBDC->query("SELECT COUNT(*) FROM vta_clientes")->fetchColumn();
+        if ($count > 0) return;
+
+        self::$conexionBDC->prepare(
+            "INSERT INTO vta_clientes
+             (idx, razon_social, condicion_fiscal, condicion_pago, habilitado, observaciones)
+             VALUES (?, 'Consumidor Final', 'Consumidor Final', 'Contado', 1,
+                     'Cliente genérico para ventas en mostrador sin identificación.')"
+        )->execute([uniqid('cli_')]);
     }
 
     private static function crearTablaVentasItems(): void

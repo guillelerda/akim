@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($page_title ?? 'AKIM', ENT_QUOTES); ?> — AKIM</title>
-    <link rel="stylesheet" href="includes/plugins/fontawesome-free-6.6.0-web/css/all.min.css">
-    <link rel="stylesheet" href="includes/plugins/datatable/datatables.min.css">
-    <link rel="stylesheet" href="includes/plugins/toastr/toastr.min.css">
-    <script src="includes/plugins/jquery/jquery-3.5.1.min.js"></script>
-    <script src="includes/plugins/datatable/datatables.min.js"></script>
-    <script src="includes/plugins/toastr/toastr.min.js"></script>
+    <link rel="stylesheet" href="includes/plugins/plugins/fontawesome-free-6.6.0-web/css/all.min.css">
+    <link rel="stylesheet" href="includes/plugins/plugins/datatable/datatables.min.css">
+    <link rel="stylesheet" href="includes/plugins/plugins/toastr/toastr.min.css">
+    <script src="includes/plugins/plugins/jquery/jquery-3.5.1.min.js"></script>
+    <script src="includes/plugins/plugins/datatable/datatables.min.js"></script>
+    <script src="includes/plugins/plugins/toastr/toastr.min.js"></script>
     <script>
         toastr.options = { closeButton:true, progressBar:true, positionClass:"toast-top-right", timeOut:"3500" };
     </script>

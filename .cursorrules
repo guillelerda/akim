@@ -1,0 +1,526 @@
+# ============================================================
+# AKIM — .cursorrules  |  Tierra Byte SA
+# Arquitectura MVC POO propietaria — PHP 8.x / MySQL / PDO
+# Ruta raíz del proyecto: X:\akim
+# ============================================================
+
+
+# ════════════════════════════════════════════════════════════
+# SKILL 1 — SCAFFOLDING CORE (Framework MVC POO)
+# ════════════════════════════════════════════════════════════
+
+## Contexto del proyecto
+- Nombre: AKIM — Sistema de gestión comercial (ventas, compras, stock, tesorería, ARCA/AFIP, tienda).
+- Empresa propietaria: Tierra Byte SA.
+- Ruta raíz absoluta del proyecto: X:\akim
+- Runtime: PHP 8.x, MySQL/InnoDB, PDO, Composer PSR-4.
+- Framework: MVC propietario. No se usa Laravel, Symfony, ni ningún framework externo de backend.
+- Entrypoint único: X:\akim\index.php — contiene TODOS los `$router->get()` y `$router->post()`.
+- Autoload PSR-4 declarado en composer.json. Los namespaces raíz son:
+  - `MVC\`            → ./
+  - `Controllers\`   → ./controllers
+  - `Model\`         → ./models
+  - `Data\`          → ./data
+  - `Classes\`       → ./classes
+  - `Arca\`          → ./arca
+  - Sub-namespaces por módulo: `Controllers\Ventas\`, `Controllers\Compras\`, `Controllers\Stock\`,
+    `Controllers\Tesoreria\`, `Controllers\Tienda\`, `Controllers\Administrador\`,
+    `Model\Ventas\`, `Model\Compras\`, `Model\Stock\`, `Model\Tesoreria\`,
+    `Model\Arca\`, `Model\Genericas\`, `Data\Ventas\`, `Data\Compras\`, `Data\Stock\`.
+
+## Prefijos de módulos (código de negocio)
+| Módulo       | Prefijo tabla DB | Prefijo ruta URL | Prefijo clase controller |
+|--------------|-----------------|------------------|--------------------------|
+| Ventas       | vta_            | /vta_            | Controllers\Ventas\      |
+| Compras      | cpa_            | /cpa_            | Controllers\Compras\     |
+| Stock        | stk_            | /stk_            | Controllers\Stock\       |
+| Tesorería    | tes_            | /tes_            | Controllers\Tesoreria\   |
+| Administración| sys_ / adm_    | /adm_            | Controllers\Administrador\|
+| App config   | app_            | /parametros      | Controllers\             |
+| ARCA/AFIP    | —               | /arca_           | Model\Arca\              |
+
+## Nomenclatura exacta — Controladores
+Regla: `Controller(s)_{prefijo}{codigo}_{entidad}.php`
+- Si el controlador gestiona una entidad CRUD individual:
+  `Controller_{prefijo}{NNNN}_{entidad}.php`
+  Ejemplos reales: `Controller_vta0001_clientes.php`, `Controller_stk001_productos.php`,
+  `Controller_cpa0010_facturas.php`, `Controller_tes_cuentas.php`.
+- Si el controlador es un menú/dashboard de módulo:
+  `Controllers_{prefijo}_menu.php`
+  Ejemplos: `Controllers_vta_menu.php`, `Controllers_stk_menu.php`, `Controllers_cpa_menu.php`.
+- Si el controlador es un wizard multi-paso:
+  `Controller_{prefijo}_wizard.php`
+  Ejemplo: `Controller_vta_wizard.php`.
+- Controladores globales (sin módulo): `Controllers_{feature}.php`
+  Ejemplos: `Controllers_login.php`, `Controllers_parametros.php`, `Controllers_reportes.php`.
+- Namespace: `namespace Controllers\{Modulo};` (si es sub-módulo) o `namespace Controllers;`.
+
+## Nomenclatura exacta — Modelos
+Regla: `Model_{prefijo}{codigo}_{entidad}.php` o `Model_{prefijo}_{entidad}.php`
+- Modelos de entidad CRUD: heredan de `ActiveDBC` (BD de cliente, multi-tenant).
+  Ejemplos: `Model_vta0001_clientes.php`, `Model_stk_0001_productos.php`,
+  `Model_cpa0010_facturas.php`, `Model_tes_movimientos.php`.
+- Modelos de inicialización de esquema: `Model_apphelperBD_{modulo}.php`
+  Ejemplos: `Model_apphelperBD_ventas.php`, `Model_apphelperBD_compras.php`.
+- Modelos de servicio: `Model_{entidad}_service.php`
+  Ejemplo: `Model_arca_service.php`.
+- Helper global: `Model_apphelper.php` (sin namespace de módulo, en `Model\`).
+- Namespace: `namespace Model\{Modulo};` o `namespace Model;`.
+- Toda clase modelo CRUD declara:
+  ```php
+  protected static $tabla      = '{prefijo}_{entidad}';
+  protected static $columnasDB = ['id','idx', /* columnas */];
+  ```
+
+## Nomenclatura exacta — Clases Data
+- Directorio: `data/{Modulo}/`
+- Nombre: `{Prefijo}_{entidad}.php` con prefijo en PascalCase.
+  Ejemplos: `Vta_clientes.php`, `Stk_productos.php`, `Cpa_proveedores.php`.
+- Namespace: `namespace Data\{Modulo};`
+- Propósito: operaciones SQL de bajo nivel (INSERT/SELECT/UPDATE) que el Modelo orquesta.
+  El Modelo llama `{Clase}::setDB(self::$conexionBDC)` antes de invocar métodos Data.
+- No heredan de ActiveDBC ni ActiveDB — son clases simples con PDO inyectado por `setDB()`.
+
+## Nomenclatura exacta — Vistas
+- Directorio base: `views/`
+- Lista de entidad: `views/{modulo}/{prefijo}{NNNN}_{entidad}.php`
+  Ejemplos: `views/ventas/vta0001_clientes.php`, `views/stock/stk001_productos.php`.
+- Formulario de edición: `{prefijo}{NNNN}_{entidad}_edit.php`
+- Menú de módulo: `views/{modulo}/menu_{modulo}.php`
+- Wizard: `views/ventas/wizard/step{N}_{proposito}.php`
+- Layouts: `views/layout/layout.php` (app shell completo) y `views/layout/layout_wizard.php`.
+- Cada vista recibe variables desde el controlador por `$router->render()` — nunca accede
+  directamente a `$_SESSION` ni a la BD.
+
+## Patrón de Controlador — Regla inquebrantable
+Todo método de controlador DEBE seguir exactamente este patrón:
+
+```php
+namespace Controllers\{Modulo};
+
+use MVC\Router;
+use Model\Model_apphelper;
+use Model\{Modulo}\Model_{entidad};
+
+class Controller_{entidad}
+{
+    public static function lista(Router $router): void
+    {
+        // 1. Autenticación — SIEMPRE primera línea
+        [$userName, $mi_usuario, $nombre, $perfil] = Model_apphelper::getUsuarioAutenticado();
+
+        // 2. POST: procesar, flash, redirigir
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $accion = $_POST['accion'] ?? '';
+            // ... lógica ...
+            $_SESSION['flash_ok']    = 'Operación exitosa.';
+            // o $_SESSION['flash_error'] = 'Error.';
+            echo "<script>location.href='{ruta}';</script>";
+            return;
+        }
+
+        // 3. GET: leer flash, consultar modelo, renderizar vista
+        $flash_ok    = $_SESSION['flash_ok']    ?? null; unset($_SESSION['flash_ok']);
+        $flash_error = $_SESSION['flash_error'] ?? null; unset($_SESSION['flash_error']);
+
+        $router->render('{modulo}/{vista}', [
+            'protegida'   => true,
+            'auth'        => true,
+            'page_title'  => '...',
+            'username'    => $userName,
+            'nombre'      => $nombre,
+            'perfil'      => $perfil,
+            'flash_ok'    => $flash_ok,
+            'flash_error' => $flash_error,
+            // variables de negocio...
+        ]);
+    }
+}
+```
+
+## Patrón de Rutas — index.php
+- TODAS las rutas se registran en `X:\akim\index.php`.
+- Sintaxis exacta:
+  ```php
+  $router->get('/ruta',  [NombreControlador::class, 'metodo']);
+  $router->post('/ruta', [NombreControlador::class, 'metodo']);
+  ```
+- Los endpoints AJAX/JIT se registran como `$router->get('/jit_{entidad}', [...])`.
+- NUNCA crear archivos PHP accesibles directamente desde la web fuera del router.
+  Los archivos en `ajax/jit/` son legacy — todo nuevo endpoint va al router.
+- El router finaliza con `$router->comprobarRutas();` — no agregar lógica después.
+
+## Dual-identifier — Regla de BD
+- Toda tabla de negocio tiene DOS identificadores:
+  - `id INT AUTO_INCREMENT PRIMARY KEY` — clave relacional interna.
+  - `idx VARCHAR(30) NOT NULL UNIQUE` — UUID de negocio generado con `uniqid('{prefijo}_')`.
+- Los FK en las relaciones usan `id`. Los parámetros de URL usan `idx`.
+- Los estados de las entidades se representan con VARCHAR: `'emitida'|'cobrada'|'anulada'`,
+  `'pendiente'|'pagada'|'anulada'`, `'confirmado'|'pendiente'|'anulado'`.
+
+## Conexiones de BD — dos conexiones obligatorias
+- `ActiveDB` → BD principal del sistema (`sys_usuarios`, `sys_empresas`, `sys_licencias`).
+- `ActiveDBC` → BD del cliente activo (multi-tenant). TODOS los modelos de negocio heredan de `ActiveDBC`.
+- `ActiveDBC::setDB($conexionBDC)` se llama una sola vez en `includes/app.php`.
+- Nunca abrir una nueva conexión PDO dentro de un controlador o modelo.
+
+## Módulo activo en sesión
+- Al entrar a un módulo el controlador debe declarar:
+  ```php
+  $_SESSION['moduloActivo'] = 'VTA'; // o 'CPA', 'STK', 'TES', 'ADM'
+  ```
+- El sidebar lo usa para marcar el ítem activo.
+
+
+# ════════════════════════════════════════════════════════════
+# SKILL 2 — UI / FRONTEND REFINER
+# ════════════════════════════════════════════════════════════
+
+## Restricciones absolutas
+- PROHIBIDO modificar variables PHP, lógica de controladores o modelos al trabajar en UI.
+- PROHIBIDO usar Tailwind CSS, Bootstrap, React, Vue, Alpine.js ni ningún framework CSS/JS externo
+  que no esté ya incluido en `includes/plugins/plugins/`.
+- PROHIBIDO agregar nuevas dependencias CSS/JS sin confirmar con el equipo.
+- Usar EXCLUSIVAMENTE Vanilla JS y CSS nativo (Custom Properties).
+- jQuery 3.5.1 está disponible en TODAS las vistas que usan `layout.php`. Puede usarse.
+- Select2 4.1.0 está disponible en `includes/plugins/plugins/select2-4.1.0/`. Usar para
+  dropdowns con búsqueda; SIEMPRE aplicar tema oscuro AKIM (ver clases de referencia abajo).
+- FontAwesome 6.6.0 disponible. Usar clases `fa-solid`, `fa-regular`, `fa-brands`.
+- DataTables disponible para tablas paginadas con el bundle `includes/plugins/plugins/datatable/`.
+
+## Variables CSS globales — definidas en layout.php y layout_wizard.php
+```css
+/* Fondos */
+--bg:             #030712;   /* fondo de página */
+--sidebar-bg:     #0b1120;   /* fondo sidebar */
+--surface:        #111827;   /* superficie de cards/tablas */
+--surface-2:      #1f2937;   /* superficie secundaria (botones, inputs) */
+
+/* Bordes */
+--border:         rgba(255,255,255,.07);
+--border-med:     rgba(255,255,255,.11);
+
+/* Texto */
+--text:           #f9fafb;   /* texto principal */
+--text-muted:     #9ca3af;   /* texto secundario */
+--text-dim:       #6b7280;   /* texto atenuado, labels */
+
+/* Colores de acento */
+--accent:         #2563eb;   /* azul primario */
+--accent-lt:      #3b82f6;   /* azul claro */
+--accent-glow:    rgba(37,99,235,.22);
+--green:          #16a34a;
+--green-lt:       #22c55e;
+--red:            #dc2626;
+--amber:          #d97706;
+--purple:         #7c3aed;
+
+/* Dimensiones */
+--sidebar-w:      240px;
+--topbar-h:       58px;
+--radius:         10px;
+--radius-lg:      16px;
+--transition:     .18s ease;
+```
+NUNCA redefinir estas variables. NUNCA usar colores literales donde exista una variable.
+
+## App Shell — clases estructurales (NO modificar sin autorización)
+```
+.app-shell          — flex container raíz (sidebar + content)
+.app-sidebar        — panel lateral fijo 240px
+.app-content        — área de contenido, margin-left: var(--sidebar-w)
+.app-topbar         — barra superior sticky, height: var(--topbar-h)
+.app-main           — padding: 1.75rem, contiene las vistas renderizadas
+```
+
+## Sidebar — clases (NO modificar estructura)
+```
+.sidebar-brand          — logo + nombre AKIM
+.sidebar-brand-mark     — isotipo cuadrado con gradiente azul
+.sidebar-nav            — contenedor de links
+.sidebar-nav-section    — separador de sección (uppercase, .6rem)
+.sidebar-nav-link       — link de navegación
+.sidebar-nav-link.active— estado activo (background azul translúcido)
+.sidebar-profile        — área inferior con avatar + nombre + logout
+.sidebar-cta-btn        — botón CTA "Nueva Venta"
+```
+
+## Componentes reutilizables — usar estos, no crear variantes nuevas sin necesidad
+
+### Botones
+```css
+.btn              — base (inline-flex, gap .45rem, padding .55rem 1.1rem)
+.btn-primary      — gradiente azul, box-shadow azul
+.btn-secondary    — background surface-2, borde border-med
+.btn-success      — gradiente verde
+.btn-danger       — background rojo translúcido
+.btn-sm           — padding .38rem .75rem, font-size .78rem
+.btn-lg           — padding .75rem 1.5rem, font-size .95rem
+```
+
+### Cards
+```css
+.card             — background surface, border, border-radius radius-lg
+.card-header      — flex, space-between, padding 1rem 1.25rem, border-bottom
+.card-title       — font-size .9rem, font-weight 600
+.card-body        — padding 1.25rem
+```
+
+### Tabla estándar
+```css
+.tbl              — width 100%, border-collapse collapse, font-size .84rem
+.tbl thead th     — uppercase, .7rem, letter-spacing .07em, color text-dim
+.tbl tbody td     — padding .7rem .85rem, color text-muted, border-bottom border
+.tbl tbody tr:hover td — background rgba(255,255,255,.025)
+```
+
+### Badges
+```css
+.badge            — inline-flex, padding .18rem .55rem, border-radius 99px
+.badge-blue       — bg rgba(37,99,235,.15), color #93c5fd
+.badge-green      — bg rgba(22,163,74,.15),  color #86efac
+.badge-amber      — bg rgba(217,119,6,.15),  color #fcd34d
+.badge-red        — bg rgba(220,38,38,.15),  color #fca5a5
+.badge-gray       — bg rgba(107,114,128,.15),color #9ca3af
+```
+
+### Formularios
+```css
+.form-group       — flex-column, gap .4rem, margin-bottom .9rem
+.form-control     — bg rgba(31,41,55,.5), border border-med, padding .65rem .9rem
+.form-control:focus — border-color rgba(59,130,246,.5), box-shadow glow
+/* Variantes AKIM internas (wizard/módulos): */
+.akim-input       — equivalente a form-control con altura 40-42px
+.akim-input--lg   — variante más alta para campos prominentes
+.akim-form-group  — equivalente a form-group
+```
+
+### Alertas / Flash messages
+```css
+.alert            — flex, gap .65rem, padding .85rem 1rem, border-radius radius
+.alert-error      — bg rgba(239,68,68,.1), border rgba(239,68,68,.2), color #fca5a5
+.alert-success    — bg rgba(22,163,74,.1),  border rgba(22,163,74,.2),  color #86efac
+.alert-info       — bg rgba(37,99,235,.1),  border rgba(37,99,235,.2),  color #93c5fd
+.alert-warning    — bg rgba(217,119,6,.1),  border rgba(217,119,6,.2),  color #fcd34d
+```
+
+### Modal AKIM
+```css
+.akim-modal-overlay — position fixed, inset 0, z-index 900, background rgba(0,0,0,.55)
+                      display:none por defecto; .open → display:flex
+.akim-modal         — background surface, border border-med, border-radius 14px,
+                      padding 1.5rem, width 460px, max-width 95vw
+.akim-modal-title   — font-size 1rem, font-weight 700
+.akim-modal-footer  — flex, gap .6rem, justify-content flex-end, margin-top 1.25rem
+```
+
+### Estado vacío
+```css
+.empty-state      — flex-column, align-center, padding 3rem 1.5rem, color text-dim
+.empty-state i    — font-size 2rem, opacity .4
+```
+
+## Convención de prefijos de clase por módulo
+Cada módulo prefija sus clases locales para evitar colisiones:
+```
+.vta-   — Ventas (menu_ventas.php)
+.cli-   — Clientes (vta0001_clientes.php)
+.cpa-   — Compras
+.prd-   — Productos (stk001_productos.php)
+.stk-   — Stock (menú/ajuste/movimientos)
+.tes-   — Tesorería
+.wiz-   — Wizard de venta (layout_wizard.php + step*.php)
+```
+Al crear una vista nueva, usar el prefijo del módulo correspondiente.
+Las clases de scope local VAN en un bloque `<style>` dentro de la vista, no en hojas globales.
+
+## Wizard Layout — clases específicas (layout_wizard.php)
+```css
+.wiz-topbar         — barra superior del wizard
+.wiz-progress-wrap  — contenedor de steps, max-width 820px, centrado
+.wiz-container      — card principal del wizard, max-width 820px
+.wiz-card           — contenido interno del step
+.wiz-title          — título del step (font-size 1.1rem, font-weight 700)
+.wiz-subtitle       — descripción del step (color text-muted)
+.wiz-footer         — barra inferior (flex, space-between)
+.btn-wiz-next       — botón "Siguiente" (azul)
+.btn-wiz-back       — botón "Atrás" (ghost)
+.wiz-modo-badge     — pill de modo factura
+.wiz-modo-fiscal    — verde (AFIP)
+.wiz-modo-manual    — gris (Ticket/Remito)
+.wiz-grid-items     — grid de línea de ítem: minmax(0,1fr) 90px 130px auto
+.wiz-grid-items > * — min-width: 0 (evita overflow en grid)
+```
+
+## Select2 — patrón de tema oscuro AKIM
+Al inicializar Select2, siempre aplicar las siguientes reglas CSS scoped al contenedor
+padre (ej: `#cobrar-overlay`, `#form-agregar`) para sobreescribir el tema por defecto:
+- `.select2-container { width: 100% !important; }`
+- `.select2-container--default .select2-selection--single` →
+  `background: rgba(31,41,55,.55); border: 1px solid rgba(255,255,255,.13); height: 40px;`
+- Dropdown `z-index: 99999` — imprescindible dentro de modales (z-index 900).
+- El dropdown appended al body debe recibir una clase custom (ej: `dropdownCssClass: 'mi-s2-drop'`).
+- Para selects con pocos ítems usar `minimumResultsForSearch: Infinity` (sin caja de búsqueda).
+- Para búsqueda dinámica usar `ajax:` apuntando a un endpoint registrado en el router (GET `/jit_{entidad}`).
+- NUNCA inicializar Select2 sobre elementos con `display:none`.
+  Inicializar DESPUÉS de hacer visible el contenedor (`mcToggle`, `show`, etc.).
+
+## Reglas JavaScript
+- Preferir Vanilla JS para interacciones simples de vistas (filtros, toggles, validaciones).
+- jQuery permitido (ya cargado en layout.php). Usar `$(function(){ ... })` para código dependiente del DOM.
+- Los IIFEs `(function(){ ... })()` son válidos para encapsular scope en vistas.
+- PROHIBIDO: `console.log()` en código de producción.
+- PROHIBIDO: `eval()`, `innerHTML` con datos de usuario sin sanitizar.
+- Las redirecciones del servidor se hacen con: `echo "<script>location.href='ruta';</script>"; return;`
+- Para mostrar/ocultar paneles: usar `element.style.display = 'block'` / `'none'`.
+  NUNCA `style.display = ''` si el elemento tiene una clase CSS con `display:none`.
+- Validar formularios en cliente Y en servidor — nunca solo en uno.
+
+
+# ════════════════════════════════════════════════════════════
+# SKILL 3 — SQL & BI OPTIMIZER
+# ════════════════════════════════════════════════════════════
+
+## Conexión y driver
+- Driver exclusivo: **PDO** con preparación de sentencias. PROHIBIDO `mysqli_*` y `mysql_*`.
+- Conexión de cliente activo disponible en `ActiveDBC::$conexionBDC` (PDO).
+- Acceso desde modelo: `self::$conexionBDC` (heredado de `ActiveDBC`).
+- Acceso directo si necesario: `\Model\ActiveDBC::getDB()` devuelve el PDO.
+
+## Patrón de consulta estándar
+```php
+// Consulta con parámetros nombrados
+$stmt = self::$conexionBDC->prepare(
+    "SELECT col1, col2 FROM tabla WHERE condicion = :param LIMIT :lim"
+);
+$stmt->bindValue(':param', $valor);
+$stmt->bindValue(':lim',   $limit, \PDO::PARAM_INT);  // siempre tipado para INT
+$stmt->execute();
+return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+
+// Consulta con parámetros posicionales (INSERT/UPDATE simples)
+self::$conexionBDC->prepare(
+    "INSERT INTO tabla (col1, col2) VALUES (?, ?)"
+)->execute([$val1, $val2]);
+```
+
+## Reglas absolutas de SQL
+1. **PROHIBIDO `SELECT *`** en cualquier contexto. Listar siempre las columnas necesarias.
+2. **PROHIBIDO concatenar variables en SQL**: `"WHERE id = " . $id` es una inyección. Usar siempre `?` o `:param`.
+3. **PROHIBIDO `bindParam` para valores literales** pasados por referencia innecesariamente. Usar `bindValue`.
+4. **Tipado explícito** para enteros en LIMIT/OFFSET: `$stmt->bindValue(':lim', $n, \PDO::PARAM_INT)`.
+5. **Siempre manejar el resultado vacío**: `fetchAll() ?: []`, `fetch() ?: null`.
+6. **Envolver en try/catch** las queries que pueden fallar en tablas aún no creadas:
+   ```php
+   try { /* query */ } catch (\Throwable $e) { return []; }
+   ```
+
+## Patrón de JOIN — FK con alias descriptivos
+```sql
+-- Patrón estándar con COALESCE para FK nullable
+SELECT
+    v.id,
+    v.idx,
+    v.numero,
+    v.fecha,
+    v.total,
+    v.estado,
+    COALESCE(c.razon_social, 'Consumidor final') AS cliente_nombre,
+    c.cuit                                         AS cliente_cuit,
+    c.condicion_fiscal                             AS cliente_condicion_fiscal
+FROM vta_ventas v
+LEFT JOIN vta_clientes c ON c.id = v.cliente_id
+WHERE v.estado != 'anulada'
+ORDER BY v.created_at DESC
+LIMIT :lim
+```
+- Alias: `AS {tabla_corta}_{columna}` — ej: `AS prov_nombre`, `AS cuenta_nombre`, `AS cli_condicion_fiscal`.
+- Siempre `LEFT JOIN` para FK nullable; `JOIN` (INNER) solo cuando la FK es NOT NULL y garantizada.
+- `COALESCE(fk_col, 'Valor por defecto')` para toda FK que puede ser NULL.
+
+## Esquema de tablas — tipos de dato canónicos
+```sql
+id               INT AUTO_INCREMENT PRIMARY KEY,
+idx              VARCHAR(30)   NOT NULL UNIQUE,          -- UUID negocio: uniqid('{prefix}_')
+-- Monetarios
+monto            DECIMAL(12,2) DEFAULT 0.00,
+total            DECIMAL(12,2) DEFAULT 0.00,
+precio_venta     DECIMAL(12,2) DEFAULT 0.00,
+precio_costo     DECIMAL(12,2) DEFAULT 0.00,
+iva              DECIMAL(12,2) DEFAULT 0.00,
+descuento        DECIMAL(5,2)  DEFAULT 0.00,
+-- Cantidades
+cantidad         DECIMAL(10,3) DEFAULT 1.000,            -- 3 decimales para agro
+stock_actual     DECIMAL(10,3) DEFAULT 0.000,
+-- Estados / flags
+estado           VARCHAR(20)   DEFAULT 'pendiente',
+habilitado       TINYINT(1)    DEFAULT 1,
+-- Fechas
+fecha            DATE          NOT NULL,
+fecha_vencimiento DATE         DEFAULT NULL,
+created_at       DATETIME      DEFAULT CURRENT_TIMESTAMP,
+-- Motor y charset obligatorios
+-- ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+```
+
+## Índices — reglas
+- Todo `idx` ya tiene índice UNIQUE (implícito).
+- Agregar `KEY idx_{tabla}_{columna}(columna)` en columnas de JOIN frecuente:
+  `proveedor_id`, `cliente_id`, `cuenta_id`, `producto_id`, `factura_idx`, `venta_idx`.
+- Columnas de filtro habitual: `estado`, `fecha`, `habilitado` — candidatas a índice simple.
+- Revisar el `CREATE TABLE` en el `Model_apphelperBD_{modulo}` correspondiente antes de agregar
+  índices — no duplicar los que ya existen.
+
+## Aggregaciones y BI — reglas de output
+- Las agregaciones se resuelven en SQL, **nunca en PHP** con loops sobre arrays completos.
+- Usar alias descriptivos para BI/ETL:
+  ```sql
+  SELECT
+      DATE_FORMAT(v.fecha, '%Y-%m')                     AS periodo_mes,
+      COALESCE(c.razon_social, 'Consumidor final')       AS cliente_nombre,
+      c.condicion_fiscal                                  AS cliente_condicion_fiscal,
+      COUNT(v.id)                                         AS cantidad_ventas,
+      SUM(v.total_bruto)                                  AS total_bruto_sum,
+      SUM(v.total)                                        AS total_neto_sum,
+      AVG(v.total)                                        AS ticket_promedio,
+      SUM(CASE WHEN v.estado = 'cobrada' THEN v.total ELSE 0 END) AS total_cobrado,
+      SUM(CASE WHEN v.estado = 'emitida' THEN v.total ELSE 0 END) AS total_pendiente
+  FROM vta_ventas v
+  LEFT JOIN vta_clientes c ON c.id = v.cliente_id
+  WHERE v.estado != 'anulada'
+    AND v.fecha BETWEEN :desde AND :hasta
+  GROUP BY periodo_mes, v.cliente_id, c.razon_social, c.condicion_fiscal
+  ORDER BY periodo_mes DESC, total_neto_sum DESC
+  ```
+- `GROUP_CONCAT` con `ORDER BY` y `SEPARATOR '||'` para consolidar textos en una sola fila.
+- Usar `MONTH(fecha) = MONTH(CURDATE()) AND YEAR(fecha) = YEAR(CURDATE())` para filtros del mes actual.
+- Usar `DATE_ADD(CURDATE(), INTERVAL :dias DAY)` para proyecciones a futuro.
+
+## Patrón UPSERT — parámetros de configuración
+```sql
+INSERT INTO app_parametros (clave, valor)
+VALUES (?, ?)
+ON DUPLICATE KEY UPDATE valor = VALUES(valor)
+```
+Usar para `app_parametros` y cualquier tabla de configuración clave-valor.
+
+## Consultas JIT (Just-In-Time autocomplete)
+- Endpoint: método en controlador, ruta GET `/jit_{entidad}` en `index.php`.
+- Query: buscar por `LIKE :term` con `% al inicio y al final, ORDER BY relevancia, LIMIT 8.
+- Siempre incluir al final del array la opción "nuevo" con `'nuevo' => true`.
+- PROHIBIDO devolver más de 15 registros en un endpoint JIT — es para autocomplete, no listado.
+- El servidor filtra; el frontend NO reimplementa el filtro con `matcher`.
+
+## Reporting — entrega al módulo de reportes
+- Las queries del módulo `/reportes` en `Controllers_reportes.php` deben retornar resultados
+  con alias que coincidan con los headers del export XLSX/PDF.
+- `date_format`, `DECIMAL` con `ROUND(..., 2)`, alias en español snake_case.
+- PROHIBIDO hacer format de moneda o fechas en PHP para datos que van a export — formatear en SQL
+  solo si el destino es visual (HTML); para ETL/export entregar los valores numéricos sin formato.
+
+## Creación de tablas — siempre en Model_apphelperBD_{modulo}
+- Toda tabla nueva se crea en el método correspondiente de `Model_apphelperBD_{modulo}::inicialize()`.
+- Usar `CREATE TABLE IF NOT EXISTS`.
+- El schema se ejecuta una vez por sesión (cacheo por `$_SESSION[$key]`).
+- Las FK entre tablas del mismo módulo se documentan con comentario pero NO se crean como
+  FOREIGN KEY constraint (el framework valida en PHP para mantener la flexibilidad multi-tenant).

@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+Date: Wed, 13 Mar 2024 14:01:03 GMT
+Strict-Transport-Security: max-age=300; includeSubDomains; preload
+Content-Length: 1603
+X-XSS-Protection: 1; mode=block
+X-Frame-Options: sameorigin
+X-Content-Type-Options: nosniff
+Set-Cookie: HttpOnly;Secure
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+Content-Type: text/xml;charset=UTF-8
+Set-Cookie: f5avraaaaaaaaaaaaaaaa_session_=NPCLLMLGIGKMPHEDEPNKJPHOCDIHDLHJGMDKOKPGNPBMNHDNEONEOABNJLOMINEPLKKDFPJJEBCIFEGABKPAGHCKFLAFGGLJPJJPDHEIDBMHOHFOFJFPFNOOPIEBFCIN; HttpOnly; secure
+Set-Cookie: TS01910257=0145b27a9772e7ca4ff8c28aa78d5a8dc80a96eff9a18ef493f6e2f4fd6c1d86f5de01908ae0a3df5366503669544b44be80a5dfdb9cf44b3b169f46ea4dbede482b8da0c7650b8d1539b7a5f8bf633a6f3b1b5514; Path=/; Domain=.aws.afip.gov.ar
+Vary: Accept-Encoding

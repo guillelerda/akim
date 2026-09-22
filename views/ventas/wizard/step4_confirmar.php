@@ -2,6 +2,13 @@
     <h2 class="wiz-title">Confirmá la venta</h2>
     <p class="wiz-subtitle">Revisá los datos antes de registrar el comprobante.</p>
 
+    <?php if (!empty($flash_error)): ?>
+    <div class="alert alert-error" style="margin-bottom:1rem">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <?php echo htmlspecialchars($flash_error, ENT_QUOTES); ?>
+    </div>
+    <?php endif; ?>
+
     <!-- Datos de cabecera -->
     <div class="wiz-resumen">
         <div class="wiz-resumen-row">
@@ -88,14 +95,82 @@
     </table>
 
     <!-- Confirmar -->
-    <form method="POST" action="vta_wizard_confirmar">
+    <?php $modo_factura = $wizard['modo_factura'] ?? 'manual'; ?>
+    <form method="POST" action="vta_wizard_confirmar" id="form-confirmar">
+        <input type="hidden" name="modo_factura" value="<?php echo $modo_factura; ?>">
+
+        <!-- Indicador de tipo de comprobante (solo lectura) -->
+        <div class="wiz-modo-row">
+            <span class="wiz-modo-label">Tipo de comprobante</span>
+            <?php if ($modo_factura === 'fiscal'): ?>
+            <span class="wiz-modo-badge wiz-modo-fiscal">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                Factura Electrónica AFIP
+            </span>
+            <?php else: ?>
+            <span class="wiz-modo-badge wiz-modo-manual">
+                <i class="fa-solid fa-file-lines"></i>
+                Ticket / Remito
+            </span>
+            <?php endif; ?>
+        </div>
+
         <div class="wiz-footer">
-            <a href="vta_wizard_step3" class="btn-wiz-back">
+            <a href="vta_wizard_step3" class="btn-wiz-back" id="btn-atras">
                 <i class="fa-solid fa-arrow-left"></i> Atrás
             </a>
-            <button type="submit" class="btn-wiz-next btn-wiz-confirm">
-                <i class="fa-solid fa-check"></i> Confirmar venta
+            <?php if ($modo_factura === 'fiscal'): ?>
+            <button type="submit" class="btn-wiz-next btn-wiz-confirm btn-wiz-fiscal" id="btn-confirmar">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                Confirmar y emitir factura
             </button>
+            <?php else: ?>
+            <button type="submit" class="btn-wiz-next btn-wiz-confirm" id="btn-confirmar">
+                <i class="fa-solid fa-check"></i>
+                Confirmar venta
+            </button>
+            <?php endif; ?>
         </div>
     </form>
+
+    <!-- Overlay de espera -->
+    <div id="wiz-overlay" style="display:none;position:fixed;inset:0;z-index:9999;
+         background:rgba(3,7,18,.82);backdrop-filter:blur(4px);
+         align-items:center;justify-content:center;flex-direction:column;gap:1.25rem">
+        <div class="wiz-spinner"></div>
+        <?php if ($modo_factura === 'fiscal'): ?>
+        <p style="color:#f9fafb;font-size:.95rem;font-weight:600;margin:0">Emitiendo factura en AFIP…</p>
+        <p style="color:#9ca3af;font-size:.8rem;margin:0">Por favor esperá, esto puede demorar unos segundos.</p>
+        <?php else: ?>
+        <p style="color:#f9fafb;font-size:.95rem;font-weight:600;margin:0">Registrando venta…</p>
+        <?php endif; ?>
+    </div>
+
+<style>
+.wiz-modo-row   { display:flex; align-items:center; gap:.85rem; margin:1.25rem 0 0; padding:.9rem 1rem; border-radius:var(--radius); border:1px solid var(--border); background:var(--surface-2, rgba(255,255,255,.03)); }
+.wiz-modo-label { font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-dim); flex-shrink:0; }
+.wiz-modo-badge { display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .75rem; border-radius:99px; font-size:.78rem; font-weight:700; }
+.wiz-modo-fiscal { background:rgba(22,163,74,.18); color:#4ade80; border:1px solid rgba(22,163,74,.3); }
+.wiz-modo-manual { background:rgba(100,116,139,.15); color:var(--text-dim); border:1px solid var(--border); }
+.btn-wiz-fiscal { background:linear-gradient(135deg,#16a34a,#15803d) !important; border-color:#15803d !important; }
+.wiz-spinner { width:44px; height:44px; border:4px solid rgba(255,255,255,.15); border-top-color:#4ade80; border-radius:50%; animation:spin .75s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+</style>
+
+<script>
+(function () {
+    var form     = document.getElementById('form-confirmar');
+    var btn      = document.getElementById('btn-confirmar');
+    var btnAtras = document.getElementById('btn-atras');
+    var overlay  = document.getElementById('wiz-overlay');
+
+    form.addEventListener('submit', function () {
+        btn.disabled = true;
+        btn.style.opacity = '.6';
+        btn.style.cursor  = 'not-allowed';
+        if (btnAtras) btnAtras.style.pointerEvents = 'none';
+        overlay.style.display = 'flex';
+    });
+})();
+</script>
 </div>

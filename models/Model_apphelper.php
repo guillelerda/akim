@@ -46,12 +46,12 @@ class Model_apphelper
     {
         $obj_lic  = new Model_licencias();
         $data_lic = $obj_lic->getRegistro_lic_code($licencia);
-        if (!$data_lic) return [null, ['Licencia inválida']];
+        if (!$data_lic) return [null, ['Licencia inválida'], '', []];
 
         $em_cod    = openssl_decrypt($data_lic['lic_empresa_cod'] ?? '', SSL_COD, SSL_KEY, SSL_OPT, SSL_CIV);
         $obj_em    = new Model_empresas();
         $dataEm    = $obj_em->getRegistro_codigo($em_cod);
-        if (!$dataEm) return [null, ['Empresa inválida']];
+        if (!$dataEm) return [null, ['Empresa inválida'], '', []];
 
         $em_nombre = openssl_decrypt($dataEm['em_nombre'] ?? '', SSL_COD, SSL_KEY, SSL_OPT, SSL_CIV) ?: ($dataEm['em_nombre'] ?? '');
 
@@ -59,6 +59,7 @@ class Model_apphelper
             $em_nombre,
             $dataEm['em_slogan'] ?? '',
             $dataEm['em_logo']   ?? '',
+            $dataEm,             // 4°: raw empresa row para comprobantes y otros usos
         ];
     }
 
