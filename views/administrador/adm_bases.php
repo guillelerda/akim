@@ -114,7 +114,7 @@ function copiarSQL() {
 <div class="a-toolbar">
     <span class="a-toolbar-title">Bases de datos <small style="color:var(--text-muted);font-weight:400">(<?php echo count($lista); ?>)</small></span>
     <div class="a-toolbar-actions">
-        <a href="adm_bases_edit" class="a-btn a-btn--primary">+ Nueva base</a>
+        <a href="adm_bases_edit?nuevo=1" class="a-btn a-btn--primary">+ Nueva base</a>
     </div>
 </div>
 

@@ -5,12 +5,67 @@ namespace Controllers\Administrador;
 use MVC\Router;
 use Model\Model_apphelper;
 use Model\Administrador\Model_bases;
+use Model\ActiveDBC;
+use Model\Model_apphelperBD_parametros;
+use Model\Ventas\Model_apphelperBD_ventas;
+use Model\Stock\Model_apphelperBD_stock;
+use Model\Compras\Model_apphelperBD_compras;
+use Model\Tesoreria\Model_apphelperBD_tes;
+use Model\Tesoreria\Model_tes_cajas;
+use Model\Arca\Model_apphelperBD_arca;
 
 class Controllers_adm_bases
 {
     private static function flash(string $tipo, string $msg): void
     {
         $_SESSION['flash_' . $tipo] = $msg;
+    }
+
+    // ── Crea/verifica el 100% del esquema de la BD cliente ──────────────────────
+    // Devuelve [errores_por_modulo[], total_tablas]
+    private static function verificarEsquemaCompleto(\PDO $pdo): array
+    {
+        ActiveDBC::setDB($pdo);
+
+        // Forzar re-chequeo aunque este mismo admin ya haya inicializado
+        // el esquema de OTRA licencia en esta sesión.
+        $cacheKeys = [
+            'akim_cfg_schema_ok_'  . CFG_SCHEMA_VER,
+            'akim_vta_schema_ok_'  . VTA_SCHEMA_VER,
+            'akim_stk_schema_ok_'  . STK_SCHEMA_VER,
+            'akim_cpa_schema_ok_'  . CPA_SCHEMA_VER,
+            'akim_tes_schema_ok_'  . TES_SCHEMA_VER,
+            'akim_arca_schema_ok_' . ARCA_SCHEMA_VER,
+        ];
+        foreach ($cacheKeys as $k) unset($_SESSION[$k]);
+
+        $modulos = [
+            'Parámetros' => fn() => Model_apphelperBD_parametros::inicialize(),
+            'Ventas'     => fn() => Model_apphelperBD_ventas::inicialize(),
+            'Stock'      => fn() => Model_apphelperBD_stock::inicialize(),
+            'Compras'    => fn() => Model_apphelperBD_compras::inicialize(),
+            'Tesorería'  => fn() => Model_apphelperBD_tes::inicialize(),
+            'ARCA'       => fn() => Model_apphelperBD_arca::inicialize(),
+            'Caja'       => fn() => Model_tes_cajas::getHoy(), // dispara ensureTable() de tes_cajas/tes_caja_retiros
+        ];
+
+        $errores = [];
+        foreach ($modulos as $nombre => $fn) {
+            try {
+                $fn();
+            } catch (\Throwable $e) {
+                $errores[] = "{$nombre}: " . $e->getMessage();
+            }
+        }
+
+        // No dejar el flag "inicializado" pisando el de la licencia real activa
+        foreach ($cacheKeys as $k) unset($_SESSION[$k]);
+
+        $total = (int)$pdo->query(
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()"
+        )->fetchColumn();
+
+        return [$errores, $total];
     }
 
     // ── Lista ─────────────────────────────────────────────────────────────────
@@ -40,10 +95,21 @@ class Controllers_adm_bases
             if ($row) {
                 $r = Model_bases::decryptRow($row);
                 try {
-                    new \PDO("mysql:host={$r['bd_host']};dbname={$r['bd_name']};charset=utf8mb4",
+                    $pdo = new \PDO("mysql:host={$r['bd_host']};dbname={$r['bd_name']};charset=utf8mb4",
                              $r['bd_user'], $r['bd_pass'],
                              [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
-                    self::flash('ok', "Conexión exitosa a '{$r['bd_name']}' en {$r['bd_host']}.");
+
+                    [$erroresEsquema, $totalTablas] = self::verificarEsquemaCompleto($pdo);
+
+                    if ($erroresEsquema) {
+                        self::flash('err',
+                            "Conexión OK a '{$r['bd_name']}', pero fallaron módulos al crear/verificar tablas: "
+                            . implode(' | ', $erroresEsquema));
+                    } else {
+                        self::flash('ok',
+                            "Conexión exitosa a '{$r['bd_name']}' en {$r['bd_host']}. "
+                            . "Esquema completo verificado/creado: {$totalTablas} tablas (6 módulos OK).");
+                    }
                 } catch (\Throwable $e) {
                     self::flash('err', 'Falló la conexión: ' . $e->getMessage());
                 }
@@ -122,6 +188,13 @@ class Controllers_adm_bases
     public static function adm_edit(Router $router): void
     {
         [$userName,,$nombre] = Model_apphelper::getUsuarioAutenticado();
+
+        // "+ Nueva base" siempre debe limpiar cualquier bd_code que haya
+        // quedado en sesión de una edición anterior no completada.
+        if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['nuevo'])) {
+            unset($_SESSION['adm_bd_code']);
+        }
+
         $obj     = new Model_bases();
         $bd_code = $_SESSION['adm_bd_code'] ?? '';
         $registro_raw = $bd_code ? $obj->getByCode($bd_code) : null;

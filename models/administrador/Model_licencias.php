@@ -56,11 +56,8 @@ class Model_licencias extends ActiveDB
 
     public function getLicenciasDisponibles(string $username): array
     {
-        $sql = "SELECT l.*, e.em_nombre, e.em_code AS em_code_empresa
+        $sql = "SELECT l.*
                 FROM sys_licencias l
-                LEFT JOIN sys_empresas e ON e.em_code = (
-                    SELECT DISTINCT em_code FROM sys_links WHERE licencia = l.lic_code LIMIT 1
-                )
                 WHERE l.habilitada = 1
                   AND l.lic_code NOT IN (
                       SELECT licencia FROM sys_links WHERE username = :u
@@ -68,7 +65,26 @@ class Model_licencias extends ActiveDB
                 ORDER BY l.lic_code ASC";
         $c = self::$conexionBD->prepare($sql);
         $c->execute([':u' => $username]);
-        return $c->fetchAll() ?: [];
+        $rows = $c->fetchAll() ?: [];
+
+        // El em_code real de la licencia sale de lic_empresa_cod (encriptado en
+        // sys_licencias), no de sys_links — ese vínculo puede no existir todavía
+        // si la licencia nunca fue asignada a ningún usuario.
+        foreach ($rows as &$r) {
+            $emCode = self::decryptEmpCod($r['lic_empresa_cod'] ?? '');
+            $r['em_code_empresa'] = $emCode;
+            $r['em_nombre'] = null;
+
+            if ($emCode !== '') {
+                $emp = self::$conexionBD->prepare("SELECT em_nombre FROM sys_empresas WHERE em_code = :c LIMIT 1");
+                $emp->execute([':c' => $emCode]);
+                $er = $emp->fetch(\PDO::FETCH_ASSOC);
+                $r['em_nombre'] = $er['em_nombre'] ?? null;
+            }
+        }
+        unset($r);
+
+        return $rows;
     }
 
     public function crear(array $a): void

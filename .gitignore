@@ -1,33 +1,68 @@
-# --- SEGURIDAD: Credenciales y Configuración ---
-# Ignoramos la carpeta completa de configuración si contiene datos sensibles
+# ============================================================
+#  AKIM — .gitignore
+#  Tierra Byte SA.
+# ============================================================
+
+# --- 🔴 SEGURIDAD CRÍTICA: Credenciales y Configuración ---
 /includes/config/
-
-# CREDENCIALES DE LA api/config.php, si es que contiene claves de API o DB
-/api/config.php
-
-# Si app.php tiene las claves de conexión a la DB, es correcto ignorarlo
 /includes/app.php
-
-# Archivo de variables de entorno (estándar moderno para llaves de API y DB)
+/api/config.php
 .env
+.scripts
 
-# --- SISTEMA Y TEMPORALES ---
+# --- 🔴 AFIP / ARCA: Claves privadas y certificados (NUNCA al repo) ---
+arca/*/key/
+arca/*/key/**
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+*.key
+privada
+
+# --- 🔴 AFIP / ARCA: Tokens de sesión WSAA (son runtime, expiran) ---
+arca/*/token/
+arca/*/token/**
+TA.xml
+TRA.xml
+
+# --- 🟡 AFIP / ARCA: Temporales de debug XML (no son código) ---
+arca/*/tmp/
+arca/*/tmp/**
+
+# --- 🟡 Imágenes y archivos de tenant (datos de cliente, no código) ---
+/public/repositorio/
+/public/tmp/
+/public/imagenes/usuarios/
+
+# --- 🟡 Scripts de backup expuestos en raíz ---
+/backup_download.php
+/backup_list.php
+
+# --- 🟡 Build y generados ---
+/build/
+
+# --- ⚙️  Sistema y temporales ---
 .DS_Store
 Thumbs.db
 *.log
 *.tmp
 
-# --- REGISTROS Y LOGS DE DESARROLLO ---
+# --- 📋 Registros y Logs ---
 Logs/
 logs/
 
-# --- DEPENDENCIAS (No se suben, se instalan) ---
+# --- 📦 Dependencias (se instalan con Composer, no se versionan) ---
 /vendor/
 /node_modules/
 
-# --- ESPECÍFICOS DE IDE ---
+# --- 🛠️  IDEs ---
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# --- HERRAMIENTAS DE IA ---
+# --- 🤖 Herramientas de IA ---
 .claude/
+.agents/
