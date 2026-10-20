@@ -52,16 +52,16 @@ class Wsaa {
         ini_set("soap.wsdl_cache_enabled", 0);
         ini_set('soap.wsdl_cache_ttl', 0);
         
+        $subPath = $this->modo === Wsaa::MODO_PRODUCCION ? 'produccion' : 'homologacion';
+        $this->cert       = $this->base_dir . '/' . $this->cuit . '/key/' . $subPath . '/certificado.pem';
+        $this->privatekey = $this->base_dir . '/' . $this->cuit . '/key/' . $subPath . '/privada';
+
         if ($this->modo === Wsaa::MODO_PRODUCCION) {
             $this->wsdl = Wsaa::WSDL_PRODUCCION; 
-            $this->url = Wsaa::URL_PRODUCCION; 
-			$this->cert = "file://" . $this->base_dir . "/" . $this->cuit . "/" . Wsaa::CERT_PRODUCCION;
-            $this->privatekey = "file://" . $this->base_dir . "/" . $this->cuit . "/" . Wsaa::PRIVATEKEY_PRODUCCION;
+            $this->url  = Wsaa::URL_PRODUCCION; 
         } else {
             $this->wsdl = Wsaa::WSDL_HOMOLOGACION; 
-            $this->url = Wsaa::URL_HOMOLOGACION; 
-            $this->cert = "file://" . $this->base_dir . "/" . $this->cuit  .  Wsaa::CERT_HOMOLOGACION;
-            $this->privatekey = "file://" . $this->base_dir . "/" . $this->cuit . "/" . Wsaa::PRIVATEKEY_HOMOLOGACION;
+            $this->url  = Wsaa::URL_HOMOLOGACION; 
         }
     }
 
@@ -132,6 +132,14 @@ class Wsaa {
             $TRA->addChild('service', $this->service);
             
             $traPath = $this->base_dir . "/" . $this->cuit . '/' . $this->service . '/token/TRA.xml';
+            $traDir  = dirname($traPath);
+            if (!is_dir($traDir)) {
+                mkdir($traDir, 0755, true);
+            }
+            $tmpDir = $this->base_dir . "/" . $this->cuit . '/' . $this->service . '/tmp';
+            if (!is_dir($tmpDir)) {
+                mkdir($tmpDir, 0755, true);
+            }
             $TRA->asXML($traPath);
             
             // Log para diagnóstico
@@ -150,31 +158,77 @@ class Wsaa {
 
     /**
      * Esta funcion realiza la firma PKCS#7 usando como entrada el archivo TRA.xml, el certificado y la clave privada
-     * Genera un archivo intermedio ./:CUIT/:WebSerivce/TRA.tmp y finalmente obtiene del encabezado solo lo que se necesita para WSAA
-     * 
-     
+     * Genera un archivo intermedio TRA.tmp y obtiene del encabezado el CMS para WSAA
      */
     private function signTRA() {
-        $infilename = $this->base_dir . "/" . $this->cuit . '/' . $this->service . "/token/TRA.xml";
+        $infilename  = $this->base_dir . "/" . $this->cuit . '/' . $this->service . "/token/TRA.xml";
         $outfilename = $this->base_dir . "/" . $this->cuit . '/' . $this->service . "/TRA.tmp";
-        $headers = array();
-        $flags = !PKCS7_DETACHED;
-        $status = openssl_pkcs7_sign($infilename, $outfilename, $this->cert, $this->privatekey, $headers, $flags);
-        if (!$status) {
-            throw new \Exception("ERROR al generar la firma PKCS#7");
+
+        if (!file_exists($infilename) || filesize($infilename) === 0) {
+            throw new \Exception("No existe el archivo TRA.xml o está vacío en: {$infilename}");
         }
-        $inf = fopen($this->base_dir . "/" . $this->cuit . '/' . $this->service . "/TRA.tmp", "r");
+
+        if (!file_exists($this->cert)) {
+            throw new \Exception("Certificado AFIP no encontrado en: {$this->cert}");
+        }
+        if (!file_exists($this->privatekey)) {
+            throw new \Exception("Clave privada AFIP no encontrada en: {$this->privatekey}");
+        }
+
+        $certContent = file_get_contents($this->cert);
+        $keyContent  = file_get_contents($this->privatekey);
+
+        if ($certContent === false || trim($certContent) === '') {
+            throw new \Exception("El certificado AFIP está vacío o no se pudo leer ({$this->cert})");
+        }
+        if ($keyContent === false || trim($keyContent) === '') {
+            throw new \Exception("La clave privada AFIP está vacía o no se pudo leer ({$this->privatekey})");
+        }
+
+        // Limpiar errores previos de OpenSSL
+        while (openssl_error_string());
+
+        $privKey = openssl_pkey_get_private($keyContent);
+        if ($privKey === false) {
+            $errs = [];
+            while ($m = openssl_error_string()) { $errs[] = $m; }
+            throw new \Exception("Error al interpretar clave privada AFIP con OpenSSL: " . (implode(' | ', $errs) ?: 'Formato inválido'));
+        }
+
+        $headers = [];
+        $flags   = 0; // AFIP exige CMS con contenido embebido (no detached)
+
+        // Firmar con certificado y clave privada
+        $status = openssl_pkcs7_sign($infilename, $outfilename, $certContent, $privKey, $headers, $flags);
+
+        // Fallback: intentar pasando las rutas file:// si el parser prefiere archivos
+        if (!$status) {
+            $certUrl = 'file://' . $this->cert;
+            $keyUrl  = 'file://' . $this->privatekey;
+            $status  = openssl_pkcs7_sign($infilename, $outfilename, $certUrl, [$keyUrl, ''], $headers, $flags);
+        }
+
+        if (!$status) {
+            $errs = [];
+            while ($m = openssl_error_string()) { $errs[] = $m; }
+            throw new \Exception("ERROR al generar la firma PKCS#7: " . (implode(' | ', $errs) ?: 'openssl_pkcs7_sign devolvió false'));
+        }
+
+        if (!file_exists($outfilename)) {
+            throw new \Exception("No se generó el archivo firmado TRA.tmp");
+        }
+
+        $inf = fopen($outfilename, "r");
         $i = 0;
         $cms = "";
         while (!feof($inf)) {
             $buffer = fgets($inf);
             if ($i++ >= 4) {
-                $cms.=$buffer;
+                $cms .= $buffer;
             }
         }
         fclose($inf);
-        #unlink("token/TRA.xml");
-        unlink($this->base_dir . "/" . $this->cuit . '/' . $this->service . "/TRA.tmp");
+        @unlink($outfilename);
 
         return $cms;
     }

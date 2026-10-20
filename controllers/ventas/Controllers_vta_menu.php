@@ -37,6 +37,21 @@ class Controllers_vta_menu
                         $_SESSION['flash_ok'] = 'Venta anulada.';
                     }
 
+                } elseif ($accion === 'eliminar') {
+                    $vElim = Model_vta_ventas::getByIdx($idx);
+                    if ($vElim) {
+                        if (!empty($vElim['cae'])) {
+                            $_SESSION['flash_error'] = 'Una factura electrónica autorizada por AFIP (con CAE) no puede eliminarse.';
+                        } else {
+                            try {
+                                Model_vta_ventas::eliminar($idx);
+                                $_SESSION['flash_ok'] = 'Comprobante #' . (int)($vElim['numero'] ?? 0) . ' eliminado correctamente.';
+                            } catch (\Throwable $e) {
+                                $_SESSION['flash_error'] = 'Error al eliminar comprobante: ' . $e->getMessage();
+                            }
+                        }
+                    }
+
                 } elseif ($accion === 'cobrar') {
                     $venta = Model_vta_ventas::getByIdx($idx);
                     if ($venta && $venta['estado'] === 'emitida') {

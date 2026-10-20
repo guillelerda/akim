@@ -91,6 +91,31 @@ $cuentas_bco = array_filter($cuentas_tes, fn($c) => $c['tipo'] === 'banco');
 }
 
 @media (max-width:768px) { .vta-stats { grid-template-columns:1fr 1fr; } }
+/* Toast flotante de notificación */
+.akim-toast {
+    position: fixed; top: 1.5rem; right: 1.5rem; z-index: 999999;
+    min-width: 340px; max-width: 480px; padding: 1rem 1.15rem;
+    border-radius: 10px; display: flex; align-items: flex-start; gap: .85rem;
+    box-shadow: 0 12px 30px rgba(0,0,0,.5);
+    animation: toastSlideIn .25s ease-out;
+}
+@keyframes toastSlideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.akim-toast--error {
+    background: #1e131d; border: 1.5px solid #ef4444; color: #fecaca;
+}
+.akim-toast--error .akim-toast-icon { color: #ef4444; font-size: 1.35rem; flex-shrink: 0; margin-top: 1px; }
+.akim-toast--success {
+    background: #0f241d; border: 1.5px solid #10b981; color: #a7f3d0;
+}
+.akim-toast--success .akim-toast-icon { color: #10b981; font-size: 1.35rem; flex-shrink: 0; margin-top: 1px; }
+.akim-toast-body { flex: 1; }
+.akim-toast-title { font-weight: 700; font-size: .88rem; margin-bottom: .2rem; color: #fff; }
+.akim-toast-msg { font-size: .8rem; line-height: 1.4; word-break: break-word; }
+.akim-toast-close {
+    background: transparent; border: none; color: currentColor; opacity: .7;
+    font-size: 1.25rem; cursor: pointer; padding: 0 .2rem; line-height: 1;
+}
+.akim-toast-close:hover { opacity: 1; }
 </style>
 
 <style>
@@ -108,9 +133,57 @@ $cuentas_bco = array_filter($cuentas_tes, fn($c) => $c['tipo'] === 'banco');
 }
 .cobro-s2-drop .select2-container--default .select2-results__option--highlighted[aria-selected] { background:rgba(37,99,235,.18); color:#e2e8f0; }
 .cobro-s2-drop .select2-container--default .select2-results__option[aria-selected=true] { background:rgba(37,99,235,.12); color:#93c5fd; font-weight:600; }
+/* Toast flotante de notificación */
+.akim-toast {
+    position: fixed; top: 1.5rem; right: 1.5rem; z-index: 999999;
+    min-width: 340px; max-width: 480px; padding: 1rem 1.15rem;
+    border-radius: 10px; display: flex; align-items: flex-start; gap: .85rem;
+    box-shadow: 0 12px 30px rgba(0,0,0,.5);
+    animation: toastSlideIn .25s ease-out;
+}
+@keyframes toastSlideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.akim-toast--error {
+    background: #1e131d; border: 1.5px solid #ef4444; color: #fecaca;
+}
+.akim-toast--error .akim-toast-icon { color: #ef4444; font-size: 1.35rem; flex-shrink: 0; margin-top: 1px; }
+.akim-toast--success {
+    background: #0f241d; border: 1.5px solid #10b981; color: #a7f3d0;
+}
+.akim-toast--success .akim-toast-icon { color: #10b981; font-size: 1.35rem; flex-shrink: 0; margin-top: 1px; }
+.akim-toast-body { flex: 1; }
+.akim-toast-title { font-weight: 700; font-size: .88rem; margin-bottom: .2rem; color: #fff; }
+.akim-toast-msg { font-size: .8rem; line-height: 1.4; word-break: break-word; }
+.akim-toast-close {
+    background: transparent; border: none; color: currentColor; opacity: .7;
+    font-size: 1.25rem; cursor: pointer; padding: 0 .2rem; line-height: 1;
+}
+.akim-toast-close:hover { opacity: 1; }
 </style>
 
-<!-- Flash messages -->
+<!-- Toast flotante de notificación -->
+<?php if (!empty($flash_error)): ?>
+<div class="akim-toast akim-toast--error" id="vta-toast">
+    <div class="akim-toast-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+    <div class="akim-toast-body">
+        <div class="akim-toast-title">Atención — Falló emisión AFIP</div>
+        <div class="akim-toast-msg"><?php echo htmlspecialchars($flash_error, ENT_QUOTES); ?></div>
+    </div>
+    <button type="button" class="akim-toast-close" onclick="document.getElementById('vta-toast').remove()">×</button>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($flash_ok)): ?>
+<div class="akim-toast akim-toast--success" id="vta-toast-ok">
+    <div class="akim-toast-icon"><i class="fa-solid fa-circle-check"></i></div>
+    <div class="akim-toast-body">
+        <div class="akim-toast-title">Operación exitosa</div>
+        <div class="akim-toast-msg"><?php echo htmlspecialchars($flash_ok, ENT_QUOTES); ?></div>
+    </div>
+    <button type="button" class="akim-toast-close" onclick="document.getElementById('vta-toast-ok').remove()">×</button>
+</div>
+<?php endif; ?>
+
+<!-- Flash messages inline -->
 <?php if (!empty($flash_ok)): ?>
 <div class="alert alert-success" style="margin-bottom:1.25rem">
     <i class="fa-solid fa-circle-check"></i>
@@ -250,17 +323,27 @@ $cuentas_bco = array_filter($cuentas_tes, fn($c) => $c['tipo'] === 'banco');
                         $ <?php echo number_format((float)($v['total'] ?? 0), 2, ',', '.'); ?>
                     </td>
                     <td style="text-align:center">
-                        <span class="estado-badge estado-<?php echo htmlspecialchars($estado, ENT_QUOTES); ?>">
-                            <?php echo match($estado) { 'cobrada' => 'Cobrada', 'anulada' => 'Anulada', default => 'Emitida' }; ?>
-                        </span>
+                        <?php if (!empty($v['cae'])): ?>
+                            <span class="estado-badge estado-cobrada" style="background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3)">
+                                <i class="fa-solid fa-circle-check"></i> AFIP OK
+                            </span>
+                        <?php elseif ($estado === 'rechazada' || ($v['modo_factura'] ?? '') === 'fiscal'): ?>
+                            <span class="estado-badge" style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)" title="Comprobante no autorizado por AFIP">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Rechazada
+                            </span>
+                        <?php else: ?>
+                            <span class="estado-badge estado-<?php echo htmlspecialchars($estado, ENT_QUOTES); ?>">
+                                <?php echo match($estado) { 'cobrada' => 'Cobrada', 'anulada' => 'Anulada', default => 'Emitida' }; ?>
+                            </span>
+                        <?php endif; ?>
                     </td>
                     <td style="text-align:center">
-                        <div style="display:flex;gap:.3rem;justify-content:center">
+                        <div style="display:flex;gap:.3rem;justify-content:center;align-items:center">
                             <a href="vta_comprobante?idx=<?php echo urlencode($v['idx']); ?>"
                                class="btn btn-secondary btn-sm" title="Ver comprobante" target="_blank">
                                 <i class="fa-solid fa-file-invoice"></i>
                             </a>
-                            <?php if ($estado === 'emitida'): ?>
+                            <?php if ($estado === 'emitida' && empty($v['cae'])): ?>
                             <button class="btn btn-success btn-sm" title="Registrar cobro"
                                     onclick="abrirCobrar(<?php echo htmlspecialchars(json_encode([
                                         'idx'   => $v['idx'],
@@ -271,16 +354,20 @@ $cuentas_bco = array_filter($cuentas_tes, fn($c) => $c['tipo'] === 'banco');
                                 <i class="fa-solid fa-hand-holding-dollar"></i> Cobrar
                             </button>
                             <?php endif; ?>
-                            <?php if (!$anulada && !$cobrada && empty($v['cae'])): ?>
-                            <form method="POST" action="ventas" onsubmit="return confirm('¿Anular esta venta?')">
-                                <input type="hidden" name="accion" value="anular">
+
+                            <?php if (empty($v['cae'])): ?>
+                            <!-- Botón para eliminar comprobante NO AUTORIZADO / Ticket interno -->
+                            <form method="POST" action="ventas" style="display:inline"
+                                  onsubmit="return confirm('¿Eliminar definitivamente el comprobante #<?php echo str_pad((int)($v['numero'] ?? 0), 4, '0', STR_PAD_LEFT); ?>?\nSe repondrá el stock de los productos.');">
+                                <input type="hidden" name="accion" value="eliminar">
                                 <input type="hidden" name="idx" value="<?php echo htmlspecialchars($v['idx'], ENT_QUOTES); ?>">
-                                <button class="btn btn-danger btn-sm" title="Anular">
-                                    <i class="fa-solid fa-ban"></i>
+                                <button type="submit" class="btn btn-danger btn-sm" title="Eliminar comprobante no autorizado"
+                                        style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);padding:.28rem .55rem">
+                                    <i class="fa-solid fa-trash"></i>
                                 </button>
                             </form>
-                            <?php elseif (!$anulada && !$cobrada && !empty($v['cae'])): ?>
-                            <span title="Factura electrónica — solo anulable por Nota de Crédito"
+                            <?php else: ?>
+                            <span title="Factura electrónica — solo anulable por Nota de Crédito en AFIP"
                                   style="padding:.28rem .55rem;border-radius:6px;font-size:.75rem;
                                          color:var(--text-dim);border:1px solid var(--border);cursor:default">
                                 <i class="fa-solid fa-file-circle-minus"></i> NC

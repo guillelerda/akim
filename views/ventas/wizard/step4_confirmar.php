@@ -99,19 +99,29 @@
     <form method="POST" action="vta_wizard_confirmar" id="form-confirmar">
         <input type="hidden" name="modo_factura" value="<?php echo $modo_factura; ?>">
 
-        <!-- Indicador de tipo de comprobante (solo lectura) -->
-        <div class="wiz-modo-row">
-            <span class="wiz-modo-label">Tipo de comprobante</span>
+        <!-- Indicador de tipo de comprobante -->
+        <div class="wiz-modo-row <?php echo $modo_factura === 'fiscal' ? 'wiz-modo-row--fiscal' : ''; ?>">
+            <span class="wiz-modo-label">Tipo de emisión</span>
             <?php if ($modo_factura === 'fiscal'): ?>
-            <span class="wiz-modo-badge wiz-modo-fiscal">
-                <i class="fa-solid fa-file-invoice-dollar"></i>
-                Factura Electrónica AFIP
-            </span>
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:.5rem">
+                <span class="wiz-modo-badge wiz-modo-fiscal">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    Factura Electrónica AFIP (Oficial)
+                </span>
+                <span style="font-size:.78rem;color:#4ade80;font-weight:600">
+                    <i class="fa-solid fa-shield-halved"></i> Se solicitará CAE oficial en AFIP
+                </span>
+            </div>
             <?php else: ?>
-            <span class="wiz-modo-badge wiz-modo-manual">
-                <i class="fa-solid fa-file-lines"></i>
-                Ticket / Remito
-            </span>
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:.5rem">
+                <span class="wiz-modo-badge wiz-modo-manual">
+                    <i class="fa-solid fa-file-lines"></i>
+                    Ticket / Remito Interno
+                </span>
+                <span style="font-size:.78rem;color:var(--text-dim)">
+                    Comprobante no fiscal (Letra X)
+                </span>
+            </div>
             <?php endif; ?>
         </div>
 
@@ -122,12 +132,12 @@
             <?php if ($modo_factura === 'fiscal'): ?>
             <button type="submit" class="btn-wiz-next btn-wiz-confirm btn-wiz-fiscal" id="btn-confirmar">
                 <i class="fa-solid fa-file-invoice-dollar"></i>
-                Confirmar y emitir factura
+                Confirmar y Emitir en AFIP
             </button>
             <?php else: ?>
             <button type="submit" class="btn-wiz-next btn-wiz-confirm" id="btn-confirmar">
                 <i class="fa-solid fa-check"></i>
-                Confirmar venta
+                Confirmar Venta Interna
             </button>
             <?php endif; ?>
         </div>

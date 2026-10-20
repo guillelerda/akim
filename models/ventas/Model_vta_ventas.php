@@ -146,6 +146,58 @@ class Model_vta_ventas extends ActiveDBC
             ->execute([':idx' => $idx]);
     }
 
+    /**
+     * Elimina definitivamente una venta/comprobante que NO haya sido autorizado por AFIP (sin CAE).
+     * Repone el stock y elimina registros asociados.
+     */
+    public static function eliminar(string $idx): bool
+    {
+        $v = self::getByIdx($idx);
+        if (!$v || !empty($v['cae'])) {
+            return false; // Prohibido eliminar si tiene CAE oficial
+        }
+
+        $db = self::$conexionBDC;
+        $db->beginTransaction();
+        try {
+            // 1. Reponer stock usando el método nativo del módulo de stock
+            $items  = self::getItems($idx);
+            $dep_id = \Model\Stock\Model_stk_depositos::getDefault();
+            foreach ($items as $item) {
+                $pid  = (int)($item['producto_id'] ?? 0);
+                $cant = (float)($item['cantidad'] ?? 0);
+                if ($pid > 0 && $cant > 0) {
+                    try {
+                        \Model\Stock\Model_stk_movimientos::registrar(
+                            'ajuste_pos',
+                            $pid,
+                            $dep_id,
+                            $cant,
+                            0,
+                            'Eliminación comprobante #' . (int)($v['numero'] ?? 0)
+                        );
+                    } catch (\Throwable $ex) {}
+                }
+            }
+
+            // 2. Eliminar cobros de tesorería asociados si hubieran
+            try {
+                $db->prepare("DELETE FROM tes_movimientos WHERE comprobante_idx = :vi OR observaciones LIKE :obs")
+                   ->execute([':vi' => $idx, ':obs' => "%#{$v['numero']}%"]);
+            } catch (\Throwable $e) {}
+
+            // 3. Eliminar ítems y cabecera
+            $db->prepare("DELETE FROM vta_ventas_items WHERE venta_idx = :vi")->execute([':vi' => $idx]);
+            $db->prepare("DELETE FROM vta_ventas WHERE idx = :idx")->execute([':idx' => $idx]);
+
+            $db->commit();
+            return true;
+        } catch (\Throwable $e) {
+            $db->rollBack();
+            throw $e;
+        }
+    }
+
     public static function getItems(string $venta_idx): array
     {
         $c = self::$conexionBDC->prepare(

@@ -157,7 +157,7 @@ $num_interno = '#' . str_pad((int)($venta['numero'] ?? 0), 4, '0', STR_PAD_LEFT)
     flex-direction: column;
     justify-content: center;
 }
-.cmp-em-logo   { max-height: 46px; max-width: 140px; margin-bottom: 5px; display: block; }
+.cmp-em-logo   { max-height: 52px; max-width: 160px; width: auto; height: auto; object-fit: contain; margin-bottom: 5px; display: block; }
 .cmp-em-nombre { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
 .cmp-em-dato   { font-size: 8.5px; color: #222; line-height: 1.6; }
 .cmp-em-cond   { font-size: 8.5px; font-weight: 700; margin-top: 3px; }
@@ -293,6 +293,13 @@ $num_interno = '#' . str_pad((int)($venta['numero'] ?? 0), 4, '0', STR_PAD_LEFT)
 </style>
 
 <div class="cmp-page">
+
+    <?php if (!$es_fiscal): ?>
+    <div style="background:#fef2f2;border:1.5px dashed #ef4444;color:#b91c1c;padding:6px 12px;margin-bottom:8px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:space-between">
+        <span>DOCUMENTO NO VÁLIDO COMO FACTURA (Ticket Interno — Sin autorización AFIP)</span>
+        <span>LETRA X</span>
+    </div>
+    <?php endif; ?>
 
     <!-- ════════════════════════════════════════════════════════════════════
          ENCABEZADO
@@ -514,8 +521,17 @@ $num_interno = '#' . str_pad((int)($venta['numero'] ?? 0), 4, '0', STR_PAD_LEFT)
 
         <!-- QR AFIP -->
         <div class="cmp-qr-wrap">
-            <canvas id="cmp-qr" width="80" height="80"
-                    title="QR AFIP — verificar en afip.gob.ar"></canvas>
+            <?php if (!empty($afip_qr_url)): ?>
+            <img class="cmp-qr-img"
+                 src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&ecc=M&data=<?php echo urlencode($afip_qr_url); ?>"
+                 alt="QR AFIP"
+                 width="80"
+                 height="80"
+                 style="display:block;border:none"
+                 title="QR AFIP — verificar en afip.gob.ar">
+            <?php else: ?>
+            <div style="width:80px;height:80px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:7px;color:#999;text-align:center">QR no disponible</div>
+            <?php endif; ?>
         </div>
 
         <!-- Marca AFIP / ARCA -->
@@ -540,32 +556,6 @@ $num_interno = '#' . str_pad((int)($venta['numero'] ?? 0), 4, '0', STR_PAD_LEFT)
         </div>
 
     </div>
-
-    <script>
-    (function () {
-        var qrUrl  = <?php echo json_encode($afip_qr_url); ?>;
-        var canvas = document.getElementById('cmp-qr');
-        if (!canvas || !qrUrl) return;
-        var img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = function () {
-            canvas.getContext('2d').drawImage(img, 0, 0, 80, 80);
-        };
-        img.onerror = function () {
-            var ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#f3f4f6';
-            ctx.fillRect(0, 0, 80, 80);
-            ctx.fillStyle = '#999';
-            ctx.font = '6px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('QR no disponible', 40, 38);
-            ctx.fillText('(sin internet)', 40, 48);
-        };
-        img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&ecc=M&data='
-                  + encodeURIComponent(qrUrl);
-    }());
-    </script>
-
     <?php else: ?>
     <div class="cmp-footer-manual">
         <div class="ftl">Generado por AKIM Gestión Comercial</div>

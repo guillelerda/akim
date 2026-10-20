@@ -55,19 +55,32 @@ class Controller_vta_wizard
             $errores[] = 'Seleccioná o ingresá un cliente para continuar.';
         }
 
-        // Leer el modo elegido desde el botón del menú (?modo=fiscal|manual)
-        $modo_factura = ($_GET['modo'] ?? 'manual') === 'fiscal' ? 'fiscal' : 'manual';
+        // Verificar si ARCA está habilitado y configurado
+        $arca_cfg        = Model_arca_service::getConfig();
+        $arca_habilitado = !empty($arca_cfg['habilitado']) && !empty($arca_cfg['cert_ok']) && !empty($arca_cfg['cuit']);
+
+        // Prioridad: 1) GET ?modo=...  2) Sesión guardada  3) Si ARCA está habilitado => fiscal, sino manual
+        if (isset($_GET['modo'])) {
+            $modo_factura = $_GET['modo'] === 'fiscal' ? 'fiscal' : 'manual';
+        } elseif (isset($_SESSION[self::SESSION_KEY]['modo_factura'])) {
+            $modo_factura = $_SESSION[self::SESSION_KEY]['modo_factura'];
+        } else {
+            $modo_factura = $arca_habilitado ? 'fiscal' : 'manual';
+        }
 
         $router->render('ventas/wizard/step1_cliente', [
-            'protegida'    => true,
-            'auth'         => true,
-            'username'     => $userName,
-            'nombre'       => $nombre,
-            'perfil'       => $perfil,
-            'wizard'       => $_SESSION[self::SESSION_KEY] ?? [],
-            'errores'      => $errores ?? [],
-            'modo_factura' => $modo_factura,
-            'paso'         => 1,
+            'protegida'       => true,
+            'auth'            => true,
+            'username'        => $userName,
+            'nombre'          => $nombre,
+            'perfil'          => $perfil,
+            'wizard'          => $_SESSION[self::SESSION_KEY] ?? [],
+            'errores'         => $errores ?? [],
+            'modo_factura'    => $modo_factura,
+            'arca_habilitado' => $arca_habilitado,
+            'arca_pv'         => $arca_cfg['pv'],
+            'arca_entorno'    => ($arca_cfg['modo'] ?? 0) === 1 ? 'Producción' : 'Homologación',
+            'paso'            => 1,
         ], 'layout_wizard');
     }
 
@@ -286,15 +299,25 @@ class Controller_vta_wizard
             // ── Emisión AFIP ──────────────────────────────────────────────────
             if ($modo_factura === 'fiscal') {
                 try {
-                    Model_arca_service::emitir($wizard, $vtaIdx);
-                    $_SESSION['flash_ok'] = "Venta #{$numero} registrada con factura electrónica.";
+                    $resAfip = Model_arca_service::emitir($wizard, $vtaIdx);
+                    $nroFmt  = str_pad((int)($resAfip['nro_afip'] ?? 0), 8, '0', STR_PAD_LEFT);
+                    $_SESSION['flash_ok'] = "Factura autorizada por AFIP — CAE: {$resAfip['cae']} — Comp. Nº {$nroFmt}.";
+                    unset($_SESSION[self::SESSION_KEY]);
+                    echo "<script>location.href='vta_comprobante?idx=" . urlencode($vtaIdx) . "';</script>";
+                    return;
                 } catch (\Throwable $e) {
                     error_log('[AKIM ARCA] ' . $e->getMessage());
-                    $_SESSION['flash_ok']    = "Venta #{$numero} registrada.";
-                    $_SESSION['flash_error'] = 'Error al emitir factura electrónica: ' . $e->getMessage();
+                    // Marcar en BD explícitamente como venta rechazada por AFIP
+                    try {
+                        \Model\ActiveDBC::getDB()->prepare(
+                            "UPDATE vta_ventas SET estado = 'rechazada', modo_factura = 'fiscal' WHERE idx = :idx"
+                        )->execute([':idx' => $vtaIdx]);
+                    } catch (\Throwable $ex) {}
+
+                    $_SESSION['flash_error'] = 'AFIP rechazó la emisión: ' . $e->getMessage();
                 }
             } else {
-                $_SESSION['flash_ok'] = "Venta #{$numero} registrada correctamente.";
+                $_SESSION['flash_ok'] = "Venta #{$numero} registrada correctamente (Ticket interno).";
             }
 
             unset($_SESSION[self::SESSION_KEY]);
