@@ -10,6 +10,7 @@
 namespace Arca;
 
 
+use Exception;
 use Arca\Wsaa;
 use Arca\wsafip;
 use Arca\dto\personaAFIP;
@@ -41,7 +42,7 @@ class WsSrPadronA5 extends WsAFIP {
             $this->wsdl = WsSrPadronA5::WSDL_HOMOLOGACION;
             $this->url = WsSrPadronA5::URL_HOMOLOGACION;
         }
-        $this->initializeSoapClient(SOAP_1_1);
+        $this->initializeSoapClient(\SOAP_1_1);
     }
 
     /**
@@ -105,7 +106,7 @@ class WsSrPadronA5 extends WsAFIP {
     private function checkErrors($results, $calledMethod) {
         if (!(isset($results->{$calledMethod.'Return'}) || isset($results->{'return'}))) {
             throw new Exception(WsAFIP::MSG_BAD_RESPONSE . ' - ' . $calledMethod);
-        } else if (is_soap_fault($results)) {
+        } else if (\is_soap_fault($results)) {
             throw new Exception("$results->faultcode - $results->faultstring - $calledMethod");
         }
     }

@@ -17,6 +17,7 @@ class Controllers_vta_menu
     public static function menu(Router $router): void
     {
         [$userName, , $nombre, $perfil] = Model_apphelper::getUsuarioAutenticado();
+        Model_apphelper::requerirAccesoModulo('VTA');
         $init    = Model_apphelper::inicialize();
         [$em_nombre] = Model_apphelper::getLicenciaAutenticada($init['licencia']);
         $_SESSION['moduloActivo'] = 'VTA';

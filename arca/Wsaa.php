@@ -13,6 +13,8 @@
  
 namespace Arca;
 
+use Exception;
+
 
 class Wsaa {
 
@@ -229,7 +231,13 @@ class Wsaa {
             'ssl' => [
                 'verify_peer' => false,
                 'verify_peer_name' => false,
-                'allow_self_signed' => true
+                'allow_self_signed' => true,
+                'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+                'ciphers' => 'DEFAULT:!DH:!DHE@SECLEVEL=1',
+            ],
+            'http' => [
+                'user_agent' => 'Mozilla/5.0 (compatible; AFIP client)',
+                'timeout' => 30,
             ]
         ]);
 
@@ -238,10 +246,12 @@ class Wsaa {
         file_put_contents('/tmp/wsaa_time_debug.log', "WSDL last modified: " . date('c', filemtime($wsdlPath)) . "\n", FILE_APPEND);
 
         $client = new \SoapClient($wsdlPath, [
-            'soap_version' => SOAP_1_2,
+            'soap_version' => \SOAP_1_2,
             'location' => $this->url,
             'trace' => 1,
             'exceptions' => 0,
+            'connection_timeout' => 30,
+            'keep_alive' => false,
             'stream_context' => $context
         ]);
 
@@ -255,7 +265,7 @@ class Wsaa {
             file_put_contents($this->base_dir . "/" . $this->cuit . '/' . $this->service . "/tmp/response-loginCms.xml", $client->__getLastResponse());
         }
 
-        if (is_soap_fault($results)) {
+        if (\is_soap_fault($results)) {
             // Registrar error con timestamp
             file_put_contents('/tmp/wsaa_time_debug.log', "Error SOAP: " . date('c') . " - " . $results->faultcode . " - " . $results->faultstring . "\n", FILE_APPEND);
             throw new \Exception("Error SOAP: " . $results->faultcode . " - " . $results->faultstring);
@@ -517,7 +527,8 @@ class Wsaa {
             curl_setopt_array($ch, [
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_TIMEOUT => 3,
-                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_CIPHER_LIST => 'DEFAULT:!DH:!DHE@SECLEVEL=1',
             ]);
             
             $response = curl_exec($ch);

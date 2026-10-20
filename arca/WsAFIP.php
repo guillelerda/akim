@@ -2,6 +2,7 @@
 namespace Arca;
 
 //include_once (__DIR__ . '/wsaa.php');
+use Exception;
 use Arca\Wsaa;
 //use Arca\Wsfev1;
 
@@ -110,7 +111,13 @@ class WsAFIP {
                 'ssl' => array(
                     'verify_peer' => false,
                     'verify_peer_name' => false,
-                    'allow_self_signed' => true
+                    'allow_self_signed' => true,
+                    'crypto_method' => \STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT,
+                    'ciphers' => 'DEFAULT:!DH:!DHE@SECLEVEL=1',
+                ),
+                'http' => array(
+                    'user_agent' => 'Mozilla/5.0 (compatible; AFIP client)',
+                    'timeout' => 30,
                 )
             ));
 
@@ -122,8 +129,10 @@ class WsAFIP {
                 #'verifyhost' => false,
                 'exceptions' => 1,
                 'encoding' => 'ISO-8859-1',
-                'features' => SOAP_USE_XSI_ARRAY_TYPE + SOAP_SINGLE_ELEMENT_ARRAYS,
+                'features' => \SOAP_USE_XSI_ARRAY_TYPE + \SOAP_SINGLE_ELEMENT_ARRAYS,
                 'trace' => 1,
+                'connection_timeout' => 30,
+                'keep_alive' => false,
                 'stream_context' => $context
             )); # needed by getLastRequestHeaders and others
 

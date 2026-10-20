@@ -3,6 +3,7 @@ namespace Arca;
 
 //include_once (__DIR__ . '/wsaa.php');
 //include_once (__DIR__ . '/wsafip.php');
+use Exception;
 use Arca\Wsaa;
 use Arca\Wsfev1;
 
@@ -33,7 +34,7 @@ class Wsfev1 extends WsAFIP {
             $this->wsdl = Wsfev1::WSDL_HOMOLOGACION;
             $this->url = Wsfev1::URL_HOMOLOGACION;
         }
-        $this->initializeSoapClient(SOAP_1_2);
+        $this->initializeSoapClient(\SOAP_1_2);
     }
 
     /**
@@ -804,7 +805,7 @@ class Wsfev1 extends WsAFIP {
                 $errorMsg .= "\n $e->Code - $e->Msg";
             }
             throw new \Exception($errorMsg);
-        } else if (is_soap_fault($results)) {
+        } else if (\is_soap_fault($results)) {
             throw new \Exception("$results->faultcode - $results->faultstring - $calledMethod");
         }
     }

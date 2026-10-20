@@ -17,6 +17,7 @@ class Controllers_tienda_menu
     public static function menu(Router $router): void
     {
         [$userName, $mi_usuario, $nombre, $perfil] = Model_apphelper::getUsuarioAutenticado();
+        Model_apphelper::requerirAccesoModulo('TIENDA');
         $_SESSION['moduloActivo'] = 'TIENDA';
 
         $productos    = [];

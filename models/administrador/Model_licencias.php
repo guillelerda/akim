@@ -25,6 +25,7 @@ class Model_licencias extends ActiveDB
     public function getLicenciasUsuario(string $username): array
     {
         $sql = "SELECT l.lic_code, l.lic_empresa_cod, l.bd_code, l.habilitada, l.vencimiento,
+                       l.lic_modulos,
                        e.em_nombre, e.em_logo, e.em_slogan,
                        b.bd_host, b.bd_name, b.bd_user, b.bd_pass
                 FROM sys_links lk
@@ -42,6 +43,7 @@ class Model_licencias extends ActiveDB
     public function getLicenciasActivas(): array
     {
         $sql = "SELECT l.lic_code, l.lic_empresa_cod, l.bd_code, l.habilitada, l.vencimiento,
+                       l.lic_modulos,
                        e.em_nombre, e.em_logo, e.em_slogan,
                        b.bd_host, b.bd_name, b.bd_user, b.bd_pass
                 FROM sys_licencias l

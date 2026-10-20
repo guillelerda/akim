@@ -1,5 +1,5 @@
 <?php
-$currentPath  = $_SERVER['REQUEST_URI'] ?? '';
+$currentPath     = $_SERVER['REQUEST_URI'] ?? '';
 $sidebarPerfil   = $perfil    ?? 'user';
 $sidebarNombre   = $nombre    ?? '';
 $sidebarUsername = $username  ?? ($_SESSION['usuario'] ?? '');
@@ -13,7 +13,7 @@ $initial = strtoupper(substr($sidebarNombre ?: $sidebarUsername, 0, 1) ?: 'U');
 
 <aside class="app-sidebar" id="appSidebar">
 
-    <!-- ── Brand ──────────────────────────────────────────── -->
+    <!-- ── Brand ──────────────────────────────────────────────────────────── -->
     <a href="menu" class="sidebar-brand">
         <div class="sidebar-brand-mark">AK</div>
         <div class="sidebar-brand-info">
@@ -22,15 +22,17 @@ $initial = strtoupper(substr($sidebarNombre ?: $sidebarUsername, 0, 1) ?: 'U');
         </div>
     </a>
 
-    <!-- ── CTA principal ──────────────────────────────────── -->
+    <!-- ── CTA Nueva Venta (solo si tiene módulo VTA) ─────────────────────── -->
+    <?php if (\Model\Model_apphelper::tieneAccesoModulo('VTA')): ?>
     <div class="sidebar-cta-wrap">
         <a href="vta_wizard_step1" class="sidebar-cta-btn">
             <i class="fa-solid fa-bolt"></i>
             <span>Nueva Venta</span>
         </a>
     </div>
+    <?php endif; ?>
 
-    <!-- ── Navegación ─────────────────────────────────────── -->
+    <!-- ── Navegación ─────────────────────────────────────────────────────── -->
     <nav class="sidebar-nav">
 
         <a href="menu" class="sidebar-nav-link<?php echo $isActive('menu'); ?>">
@@ -40,30 +42,40 @@ $initial = strtoupper(substr($sidebarNombre ?: $sidebarUsername, 0, 1) ?: 'U');
 
         <div class="sidebar-nav-section">Operaciones</div>
 
+        <?php if (\Model\Model_apphelper::tieneAccesoModulo('VTA')): ?>
         <a href="ventas" class="sidebar-nav-link<?php echo $isActive('ventas'); ?>">
             <i class="fa-solid fa-receipt"></i>
             <span>Ventas</span>
         </a>
+        <?php endif; ?>
 
+        <?php if (\Model\Model_apphelper::tieneAccesoModulo('CPA')): ?>
         <a href="compras" class="sidebar-nav-link<?php echo $isActive('compras'); ?>">
             <i class="fa-solid fa-cart-shopping"></i>
             <span>Compras</span>
         </a>
+        <?php endif; ?>
 
+        <?php if (\Model\Model_apphelper::tieneAccesoModulo('STK')): ?>
         <a href="stock" class="sidebar-nav-link<?php echo $isActive('stock'); ?>">
             <i class="fa-solid fa-boxes-stacked"></i>
             <span>Stock</span>
         </a>
+        <?php endif; ?>
 
+        <?php if (\Model\Model_apphelper::tieneAccesoModulo('TES')): ?>
         <a href="tesoreria" class="sidebar-nav-link<?php echo $isActive('tesoreria') . $isActive('tes_'); ?>">
             <i class="fa-solid fa-coins"></i>
             <span>Tesorería</span>
         </a>
+        <?php endif; ?>
 
+        <?php if (\Model\Model_apphelper::tieneAccesoModulo('TIENDA')): ?>
         <a href="tienda" class="sidebar-nav-link<?php echo $isActive('tienda'); ?>">
             <i class="fa-solid fa-store"></i>
             <span>Tienda</span>
         </a>
+        <?php endif; ?>
 
         <div class="sidebar-nav-section">Análisis</div>
 
@@ -89,17 +101,16 @@ $initial = strtoupper(substr($sidebarNombre ?: $sidebarUsername, 0, 1) ?: 'U');
             <span>Parámetros</span>
         </a>
 
-
     </nav>
 
-    <!-- ── Empresa (cambiar) ─────────────────────────────── -->
+    <!-- ── Empresa (cambiar) ───────────────────────────────────────────────── -->
     <a href="cambiarEmpresa" class="sidebar-company-link" title="Cambiar empresa">
         <i class="fa-solid fa-building sidebar-company-icon"></i>
         <span class="sidebar-company-name"><?php echo htmlspecialchars($sidebarEmpresa, ENT_QUOTES); ?></span>
         <i class="fa-solid fa-right-left sidebar-company-swap"></i>
     </a>
 
-    <!-- ── Usuario ────────────────────────────────────────── -->
+    <!-- ── Usuario ────────────────────────────────────────────────────────── -->
     <div class="sidebar-profile">
         <div class="sidebar-profile-row">
             <div class="sidebar-avatar"><?php echo htmlspecialchars($initial); ?></div>

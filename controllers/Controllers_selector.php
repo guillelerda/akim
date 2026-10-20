@@ -51,13 +51,14 @@ class Controllers_selector
             } elseif (empty($elegida['bd_name'])) {
                 $errores[] = 'Esta empresa no tiene base de datos configurada. Configurá las credenciales en el panel de administración (sys_bases).';
             } else {
-                // Guardar credenciales encriptadas en sesión
+                // Guardar credenciales + módulos habilitados en sesión
                 $_SESSION['data_licencia'] = [
                     'lic_code'    => $elegida['lic_code'],
                     'lic_host'    => $elegida['bd_host'],
                     'lic_bd_name' => $elegida['bd_name'],
                     'lic_bd_user' => $elegida['bd_user'],
                     'lic_bd_pass' => $elegida['bd_pass'],
+                    'lic_modulos' => $elegida['lic_modulos'] ?? null, // JSON con módulos habilitados
                 ];
                 $_SESSION['licencia'] = $lic_code;
 

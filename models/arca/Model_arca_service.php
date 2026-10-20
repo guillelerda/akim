@@ -207,8 +207,8 @@ class Model_arca_service extends ActiveDBC
      */
     public static function testConexion(): array
     {
+        $cfg = self::getConfig();
         try {
-            $cfg = self::getConfig();
             if ($cfg['cuit'] === '') {
                 return ['ok' => false, 'msg' => 'CUIT no configurado.'];
             }
@@ -217,7 +217,50 @@ class Model_arca_service extends ActiveDBC
             $entorno = $cfg['modo'] === 1 ? 'Producción' : 'Homologación';
             return ['ok' => true, 'msg' => "Conexión exitosa ({$entorno})."];
         } catch (\Throwable $e) {
-            return ['ok' => false, 'msg' => $e->getMessage()];
+            $diag = self::diagnosticarConectividad($cfg['modo'] ?? 0);
+            return ['ok' => false, 'msg' => $e->getMessage() . ($diag ? " | " . $diag : '')];
         }
+    }
+
+    /**
+     * Diagnóstico de red de bajo nivel para aislar la causa de "Could not connect to host".
+     */
+    private static function diagnosticarConectividad(int $modo): string
+    {
+        $url  = $modo === 1 ? 'https://servicios1.afip.gov.ar/wsfev1/service.asmx' : 'https://wswhomo.afip.gov.ar/wsfev1/service.asmx';
+        $host = parse_url($url, PHP_URL_HOST);
+        $ip   = @gethostbyname($host);
+
+        if ($ip === $host) {
+            return "Diagnóstico: Falló resolución DNS para '$host' (el servidor de hosting no puede resolver dominios AFIP).";
+        }
+
+        $fp = @fsockopen($host, 443, $errno, $errstr, 4);
+        if (!$fp) {
+            return "Diagnóstico: DNS OK ($ip), pero falló conexión TCP al puerto 443: $errstr ($errno). El firewall saliente del hosting bloquea el puerto 443 o AFIP tiene bloqueada la IP del servidor.";
+        }
+        fclose($fp);
+
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_NOBODY, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_SSL_CIPHER_LIST, 'DEFAULT:!DH:!DHE@SECLEVEL=1');
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; AKIM)');
+            curl_exec($ch);
+            $cErr = curl_error($ch);
+            $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($cErr !== '') {
+                return "Diagnóstico: Puerto 443 abierto ($ip), pero cURL HTTPS falló: $cErr.";
+            }
+            return "Diagnóstico: Red y HTTPS responden correctamente (HTTP $httpCode en $ip). La falla es interna de SoapClient/WSDL.";
+        }
+
+        return "Diagnóstico: Conexión TCP al puerto 443 exitosa ($ip).";
     }
 }

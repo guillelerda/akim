@@ -6,6 +6,7 @@
 namespace Arca;
 
 
+use Exception;
 use Arca\Wsaa;
 use Arca\wsafip;
 
@@ -37,7 +38,7 @@ class Wsfexv1 extends WsAFIP {
             $this->wsdl = Wsfexv1::WSDL_HOMOLOGACION;
             $this->url = Wsfexv1::URL_HOMOLOGACION;
         }
-        $this->initializeSoapClient(SOAP_1_2);
+        $this->initializeSoapClient(\SOAP_1_2);
     }
     /**
      * Consulta dummy para verificar funcionamiento del servicio
@@ -398,7 +399,7 @@ class Wsfexv1 extends WsAFIP {
             $e = $results->{$calledMethod.'Result'}->FEXErr;
             $errorMsg .= "$e->ErrCode - $e->ErrMsg";
             throw new Exception($errorMsg);
-        } else if (is_soap_fault($results)) {
+        } else if (\is_soap_fault($results)) {
             throw new Exception("$results->faultcode - $results->faultstring - $calledMethod");
         }
     }

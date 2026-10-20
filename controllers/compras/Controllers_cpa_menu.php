@@ -12,6 +12,7 @@ class Controllers_cpa_menu
     public static function menu(Router $router): void
     {
         [$userName, $mi_usuario, $nombre, $perfil] = Model_apphelper::getUsuarioAutenticado();
+        Model_apphelper::requerirAccesoModulo('CPA');
         $_SESSION['moduloActivo'] = 'CPA';
         $_SESSION['layoutActivo'] = 'layout';
 

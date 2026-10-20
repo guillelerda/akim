@@ -14,6 +14,7 @@ class Controllers_tes_menu
     public static function menu(Router $router): void
     {
         [$userName, , $nombre, $perfil] = Model_apphelper::getUsuarioAutenticado();
+        Model_apphelper::requerirAccesoModulo('TES');
         $_SESSION['moduloActivo'] = 'TES';
 
         $flash_ok    = $_SESSION['flash_ok']    ?? null; unset($_SESSION['flash_ok']);

@@ -18,6 +18,7 @@ class Controllers_stk_menu
         }
 
         [$userName, $mi_usuario, $nombre, $perfil] = Model_apphelper::getUsuarioAutenticado();
+        Model_apphelper::requerirAccesoModulo('STK');
         $_SESSION['moduloActivo'] = 'STK';
 
         $stats = Model_stk_0001_productos::getStats();

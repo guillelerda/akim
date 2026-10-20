@@ -2,6 +2,7 @@
 
 namespace Arca;
 
+use Exception;
 use Arca\Wsaa;
 use Arca\Wsfev1;
 use Arca\dto\PersonaAFIP;  // Import correcto
@@ -36,7 +37,7 @@ class WsSrPadronA13 extends WsAFIP {
             $this->wsdl = WsSrPadronA13::WSDL_HOMOLOGACION;
             $this->url = WsSrPadronA13::URL_HOMOLOGACION;
         }
-        $this->initializeSoapClient(SOAP_1_1);
+        $this->initializeSoapClient(\SOAP_1_1);
     }
 
     /**
@@ -127,7 +128,7 @@ class WsSrPadronA13 extends WsAFIP {
     private function checkErrors($results, $calledMethod) {
         if (!(isset($results->{$calledMethod.'Return'}) || isset($results->{'return'}))) {
             throw new Exception(WsAFIP::MSG_BAD_RESPONSE . ' - ' . $calledMethod);
-        } else if (is_soap_fault($results)) {
+        } else if (\is_soap_fault($results)) {
             throw new Exception("$results->faultcode - $results->faultstring - $calledMethod");
         }
     }

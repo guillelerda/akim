@@ -80,6 +80,53 @@ class Model_apphelper
         return [$modulo, $layout, $volver];
     }
 
+    /**
+     * Verifica si el módulo $codigo está habilitado en la licencia activa.
+     * Si la licencia no tiene módulos definidos (null/vacío), permite acceso total
+     * para no romper instalaciones existentes sin configurar.
+     *
+     * Mapa de alias: los códigos de licencia pueden diferir de los del menú.
+     *   PAGOS → TES  (Pagos/Cobros en licencia = Tesorería en menú)
+     */
+    public static function tieneAccesoModulo(string $codigo): bool
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) { session_start(); }
+
+        $lic_modulos_json = $_SESSION['data_licencia']['lic_modulos'] ?? null;
+
+        // Sin restricción configurada → acceso total (compatibilidad)
+        if (empty($lic_modulos_json)) { return true; }
+
+        $modulos = json_decode($lic_modulos_json, true);
+        if (!is_array($modulos) || empty($modulos)) { return true; }
+
+        // Alias: código del menú → posibles códigos en licencia
+        $alias = [
+            'TES' => ['TES', 'PAGOS'],
+        ];
+
+        $buscar = $alias[$codigo] ?? [$codigo];
+
+        foreach ($buscar as $cod) {
+            if (in_array($cod, $modulos, true)) { return true; }
+        }
+
+        return false;
+    }
+
+    /**
+     * Bloquea el acceso si el módulo no está habilitado en la licencia.
+     * Redirige al menú principal con mensaje flash de error.
+     */
+    public static function requerirAccesoModulo(string $codigo): void
+    {
+        if (!self::tieneAccesoModulo($codigo)) {
+            $_SESSION['flash_error'] = 'No tenés acceso al módulo solicitado según tu licencia.';
+            echo "<script>location.href='menu';</script>";
+            exit;
+        }
+    }
+
     // ── Imágenes ──────────────────────────────────────────────────────────────
 
     public static function procesarImagen(array $file, string $directorio): array

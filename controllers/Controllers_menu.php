@@ -65,14 +65,18 @@ class Controllers_menu
     private static function getModulosDisponibles(string $perfil): array
     {
         $todos = [
-            ['codigo' => 'VTA',    'nombre' => 'Ventas',        'icono' => 'fa-receipt',        'url' => 'ventas'],
-            ['codigo' => 'CPA',    'nombre' => 'Compras',       'icono' => 'fa-cart-shopping',  'url' => 'compras'],
-            ['codigo' => 'STK',    'nombre' => 'Stock',         'icono' => 'fa-boxes-stacked',  'url' => 'stock'],
-            ['codigo' => 'TES',    'nombre' => 'Tesorería',     'icono' => 'fa-coins',          'url' => 'tesoreria'],
-            ['codigo' => 'TIENDA', 'nombre' => 'Tienda',        'icono' => 'fa-store',          'url' => 'tienda'],
+            ['codigo' => 'VTA',    'nombre' => 'Ventas',    'icono' => 'fa-receipt',       'url' => 'ventas'],
+            ['codigo' => 'CPA',    'nombre' => 'Compras',   'icono' => 'fa-cart-shopping', 'url' => 'compras'],
+            ['codigo' => 'STK',    'nombre' => 'Stock',     'icono' => 'fa-boxes-stacked', 'url' => 'stock'],
+            ['codigo' => 'TES',    'nombre' => 'Tesorería', 'icono' => 'fa-coins',         'url' => 'tesoreria'],
+            ['codigo' => 'TIENDA', 'nombre' => 'Tienda',    'icono' => 'fa-store',         'url' => 'tienda'],
         ];
 
-        return $todos;
+        // Filtrar por módulos habilitados en la licencia activa
+        return array_values(array_filter(
+            $todos,
+            fn($m) => Model_apphelper::tieneAccesoModulo($m['codigo'])
+        ));
     }
 
     private static function getDashboardStats(): array
